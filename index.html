@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boxing Timer</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #root { width: 100%; max-width: 420px; padding: 24px 16px; }
+
+    /* ── Layout ── */
+    .screen { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── Timer cards ── */
+    .timer-cards {
+      display: flex;
+      gap: 10px;
+    }
+    .timer-card {
+      flex: 1;
+      background: #1a1a1a;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      user-select: none;
+    }
+    .timer-card:hover { background: #222; }
+    .timer-card.active {
+      border-color: #e63;
+      background: #1f1108;
+    }
+    .timer-card .label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 4px;
+    }
+    .timer-card .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .timer-card.active .value { color: #e63; }
+
+    /* ── Big clock ── */
+    .clock-wrap {
+      text-align: center;
+      padding: 20px 0;
+    }
+    .round-label {
+      font-size: 14px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 8px;
+    }
+    .clock {
+      font-size: 96px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      font-variant-numeric: tabular-nums;
+      font-family: 'SF Mono', 'Courier New', monospace;
+      color: #fff;
+      min-width: 260px;
+      display: inline-block;
+    }
+    .clock.rest { color: #3a9; }
+    .clock.explosive { color: #e63; }
+    .phase-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #888;
+      margin-top: 8px;
+      height: 18px;
+    }
+    .phase-label.rest { color: #3a9; }
+    .phase-label.explosive { color: #e63; }
+    .segment-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      flex: 1;
+      height: 56px;
+      border-radius: 14px;
+      border: none;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary {
+      background: #e63;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #f74; }
+    .btn-secondary {
+      background: #222;
+      color: #aaa;
+      border: 2px solid #333;
+    }
+    .btn-secondary:hover { background: #2a2a2a; color: #fff; }
+    .btn:disabled { opacity: .35; cursor: default; }
+
+    /* ── Create form ── */
+    .create-section {
+      background: #111;
+      border-radius: 18px;
+      padding: 20px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    .tab-row {
+      display: flex;
+      background: #1a1a1a;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 20px;
+      gap: 4px;
+    }
+    .tab {
+      flex: 1;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      background: transparent;
+      color: #666;
+    }
+    .tab.active {
+      background: #e63;
+      color: #fff;
+    }
+    .tab .crown {
+      font-size: 11px;
+      margin-left: 3px;
+    }
+
+    /* Field */
+    .field { margin-bottom: 14px; }
+    .field-label {
+      font-size: 12px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      padding: 7px 14px;
+      border-radius: 8px;
+      background: #1a1a1a;
+      border: 2px solid transparent;
+      color: #aaa;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .chip:hover { background: #222; color: #fff; }
+    .chip.selected {
+      border-color: #e63;
+      background: #1f1108;
+      color: #e63;
+    }
+    .chip.infinity { font-size: 18px; padding: 4px 14px; }
+
+    /* Rounds grid */
+    .rounds-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .rounds-grid .chip { padding: 7px 4px; text-align: center; }
+
+    /* Sub-option */
+    .sub-option {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: #151515;
+      border-radius: 10px;
+    }
+    .sub-option .field-label { margin-bottom: 6px; }
+
+    /* ── Popup ── */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+    }
+    .popup {
+      background: #111;
+      border-radius: 24px 24px 0 0;
+      padding: 32px 24px 40px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    .popup .crown-icon { font-size: 48px; margin-bottom: 12px; }
+    .popup h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .popup p { font-size: 15px; color: #888; line-height: 1.5; margin-bottom: 24px; }
+    .popup .price {
+      font-size: 32px;
+      font-weight: 800;
+      color: #e63;
+      margin-bottom: 20px;
+    }
+    .popup .price span { font-size: 16px; color: #666; font-weight: 400; }
+
+    /* ── Misc ── */
+    .divider { height: 1px; background: #1a1a1a; }
+    .done-screen {
+      text-align: center;
+      padding: 40px 0;
+    }
+    .done-screen .icon { font-size: 64px; margin-bottom: 16px; }
+    .done-screen h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .done-screen p { color: #888; font-size: 15px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Audio helpers ──────────────────────────────────────────
+function createBeep(ctx, freq, dur, vol = 0.4) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = freq;
+  osc.type = 'square';
+  gain.gain.setValueAtTime(vol, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + dur);
+}
+
+function playBeep(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (type === 'start') {
+      createBeep(ctx, 880, 0.15);
+      setTimeout(() => createBeep(ctx, 1100, 0.2), 160);
+    } else if (type === 'end') {
+      createBeep(ctx, 1100, 0.12);
+      setTimeout(() => createBeep(ctx, 880, 0.12), 140);
+      setTimeout(() => createBeep(ctx, 660, 0.25), 280);
+    } else if (type === 'warn') {
+      createBeep(ctx, 660, 0.1);
+      setTimeout(() => createBeep(ctx, 660, 0.1), 150);
+      setTimeout(() => createBeep(ctx, 880, 0.15), 300);
+    } else if (type === 'tick') {
+      createBeep(ctx, 440, 0.06, 0.2);
+    }
+  } catch(e) {}
+}
+
+// ── Default timers ─────────────────────────────────────────
+const DEFAULT_TIMERS = [
+  { id: 'default-3', type: 'classic', label: '3 min', roundTime: 180, rest: 60, rounds: 3, explosive: null },
+  { id: 'default-5', type: 'classic', label: '5 min', roundTime: 300, rest: 60, rounds: 3, explosive: null },
+];
+
+// ── Utility ────────────────────────────────────────────────
+function fmt(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ── Storage helpers ────────────────────────────────────────
+function loadTimers() {
+  try { return JSON.parse(localStorage.getItem('bt_timers') || 'null') || DEFAULT_TIMERS; } catch { return DEFAULT_TIMERS; }
+}
+function saveTimers(t) { localStorage.setItem('bt_timers', JSON.stringify(t)); }
+function loadLastId() { return localStorage.getItem('bt_last') || DEFAULT_TIMERS[0].id; }
+function saveLastId(id) { localStorage.setItem('bt_last', id); }
+
+// ══════════════════════════════════════════════════════════
+// CREATE FORM
+// ══════════════════════════════════════════════════════════
+function Chip({ label, selected, onClick, className = '' }) {
+  return <button className={`chip${selected?' selected':''}${className?' '+className:''}`} onClick={onClick}>{label}</button>;
+}
+
+function CreateForm({ onCreate }) {
+  const [tab, setTab] = useState('classic');
+  const [showPowerPopup, setShowPowerPopup] = useState(false);
+
+  // Classic
+  const [cRoundTime, setCRoundTime] = useState(null);
+  const [cRest, setCRest] = useState(null);
+  const [cRounds, setCRounds] = useState(null);
+  const [cExplosive, setCExplosive] = useState(null); // null | 'end_minute' | 'end_round'
+  const [cWarnTime, setCWarnTime] = useState(null);
+
+  // Power
+  const [pSegments, setPSegments] = useState(null);
+  const [pFreeTime, setPFreeTime] = useState(null);
+  const [pExpTime, setPExpTime] = useState(null);
+  const [pRest, setPRest] = useState(null);
+  const [pRounds, setPRounds] = useState(null);
+
+  const classicValid = cRoundTime && cRest && cRounds;
+  const powerValid = pSegments && pFreeTime && pExpTime && pRest && pRounds;
+
+  function handleCreate() {
+    if (tab === 'classic') {
+      const timer = {
+        id: Date.now().toString(),
+        type: 'classic',
+        label: fmt(cRoundTime),
+        roundTime: cRoundTime,
+        rest: cRest,
+        rounds: cRounds === '∞' ? Infinity : cRounds,
+        explosive: cExplosive ? { trigger: cExplosive, warnTime: cWarnTime || 10 } : null,
+      };
+      onCreate(timer);
+    } else {
+      const timer = {
+        id: Date.now().toString(),
+        type: 'power',
+        label: `${pSegments}×`,
+        segments: pSegments,
+        freeTime: pFreeTime,
+        expTime: pExpTime,
+        rest: pRest,
+        rounds: pRounds === '∞' ? Infinity : pRounds,
+      };
+      onCreate(timer);
+    }
+  }
+
+  const restOptions = [30, 60, 120, 180];
+  const roundTimeOptions = [60,90,120,150,180,210,240,270,300,360,420,480,540,600];
+  const warnOptions = [5,10,15,20,30];
+  const freeTimeOptions = [10,20,30,40,60,120,180,240,300];
+  const expTimeOptions = [5,10,15,20,25,30,35,40,45,50,60];
+
+  return (
+    <div className="create-section">
+      <div className="section-title">New Timer</div>
+      <div className="tab-row">
+        <button className={`tab${tab==='classic'?' active':''}`} onClick={() => setTab('classic')}>Classic</button>
+        <button className={`tab${tab==='power'?' active':''}`} onClick={() => { setTab('power'); setShowPowerPopup(true); }}>
+          Power <span className="crown">👑</span>
+        </button>
+      </div>
+
+      {tab === 'classic' && <>
+        <div className="field">
+          <div className="field-label">Round Time</div>
+          <div className="chips">
+            {roundTimeOptions.map(s => <Chip key={s} label={fmt(s)} selected={cRoundTime===s} onClick={() => setCRoundTime(s)} />)}
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Rest</div>
+          <div className="chips">
+            {restOptions.map(s => <Chip key={s} label={s<60?`${s}s`:fmt(s)} selected={cRest===s} onClick={() => setCRest(s)} />)}
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Rounds</div>
+          <div className="chips rounds-grid">
+            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n => <Chip key={n} label={n} selected={cRounds===n} onClick={() => setCRounds(n)} />)}
+            <Chip label="∞" selected={cRounds==='∞'} onClick={() => setCRounds('∞')} className="infinity" />
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Add Explosive Work <span style={{color:'#444',fontStyle:'italic',textTransform:'none'}}>optional</span></div>
+          <div className="chips">
+            <Chip label="End of minute" selected={cExplosive==='end_minute'} onClick={() => setCExplosive(cExplosive==='end_minute'?null:'end_minute')} />
+            <Chip label="End of round" selected={cExplosive==='end_round'} onClick={() => setCExplosive(cExplosive==='end_round'?null:'end_round')} />
+          </div>
+          {cExplosive && <div className="sub-option">
+            <div className="field-label">Warning before explosive (sec)</div>
+            <div className="chips">
+              {warnOptions.map(s => <Chip key={s} label={`${s}s`} selected={cWarnTime===s} onClick={() => setCWarnTime(s)} />)}
+            </div>
+          </div>}
+        </div>
+        <button className="btn btn-primary" style={{width:'100%',marginTop:4}} disabled={!classicValid} onClick={handleCreate}>
+          Create Timer
+        </button>
+      </>}
+
+      {tab === 'power' && <>
+        <div className="field">
+          <div className="field-label">Round Segments</div>
+          <div className="chips rounds-grid">
+            {[1,2,3,4,5,6,7,8,9,10].map(n => <Chip key={n} label={n} selected={pSegments===n} onClick={() => setPSegments(n)} />)}
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Free Work Time</div>
+          <div className="chips">
+            {freeTimeOptions.map(s => <Chip key={s} label={s<60?`${s}s`:fmt(s)} selected={pFreeTime===s} onClick={() => setPFreeTime(s)} />)}
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Explosive Work Time</div>
+          <div className="chips">
+            {expTimeOptions.map(s => <Chip key={s} label={s<60?`${s}s`:fmt(s)} selected={pExpTime===s} onClick={() => setPExpTime(s)} />)}
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Rest</div>
+          <div className="chips">
+            {restOptions.map(s => <Chip key={s} label={s<60?`${s}s`:fmt(s)} selected={pRest===s} onClick={() => setPRest(s)} />)}
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Rounds</div>
+          <div className="chips rounds-grid">
+            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n => <Chip key={n} label={n} selected={pRounds===n} onClick={() => setPRounds(n)} />)}
+            <Chip label="∞" selected={pRounds==='∞'} onClick={() => setPRounds('∞')} className="infinity" />
+          </div>
+        </div>
+        <button className="btn btn-primary" style={{width:'100%',marginTop:4}} disabled={!powerValid} onClick={handleCreate}>
+          Create Timer
+        </button>
+      </>}
+
+      {showPowerPopup && (
+        <div className="popup-overlay" onClick={() => setShowPowerPopup(false)}>
+          <div className="popup" onClick={e => e.stopPropagation()}>
+            <div className="crown-icon">👑</div>
+            <h2>Power Timer</h2>
+            <p>Advanced explosive work intervals for serious fighters. Customise every second of your training.</p>
+            <div className="price">$4.99 <span>/ one-time</span></div>
+            <button className="btn btn-primary" style={{width:'100%',marginBottom:10}} onClick={() => setShowPowerPopup(false)}>
+              Unlock Power Timer
+            </button>
+            <button className="btn btn-secondary" style={{width:'100%'}} onClick={() => { setShowPowerPopup(false); setTab('classic'); }}>
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// RUNNING TIMER
+// ══════════════════════════════════════════════════════════
+function RunningTimer({ timer, onReset, onSelectTimer, timers }) {
+  // phases: 'round' | 'explosive' | 'rest' | 'done'
+  // For power timer segment phases: 'free' | 'explosive' | 'rest'
+
+  const isPower = timer.type === 'power';
+
+  // Build phase sequence
+  function buildPhases(t) {
+    if (t.type === 'classic') {
+      const totalRounds = t.rounds === Infinity ? 999 : t.rounds;
+      const phases = [];
+      for (let r = 1; r <= totalRounds; r++) {
+        if (t.explosive && t.explosive.trigger === 'end_minute') {
+          // Split round into minutes, add explosive before each minute boundary
+          const warnTime = t.explosive.warnTime;
+          const totalMin = Math.floor(t.roundTime / 60);
+          for (let m = 0; m < totalMin; m++) {
+            const minuteWork = 60 - warnTime;
+            phases.push({ phase: 'round', duration: minuteWork, round: r, label: 'Round' });
+            phases.push({ phase: 'explosive', duration: warnTime, round: r, label: 'Explosive!' });
+          }
+          const remainder = t.roundTime % 60;
+          if (remainder > 0) {
+            phases.push({ phase: 'round', duration: remainder, round: r, label: 'Round' });
+          }
+        } else if (t.explosive && t.explosive.trigger === 'end_round') {
+          const warnTime = t.explosive.warnTime;
+          phases.push({ phase: 'round', duration: t.roundTime - warnTime, round: r, label: 'Round' });
+          phases.push({ phase: 'explosive', duration: warnTime, round: r, label: 'Explosive!' });
+        } else {
+          phases.push({ phase: 'round', duration: t.roundTime, round: r, label: 'Round' });
+        }
+        if (r < totalRounds) {
+          phases.push({ phase: 'rest', duration: t.rest, round: r, label: 'Rest' });
+        }
+      }
+      return phases;
+    } else {
+      // Power
+      const totalRounds = t.rounds === Infinity ? 999 : t.rounds;
+      const phases = [];
+      for (let r = 1; r <= totalRounds; r++) {
+        for (let s = 1; s <= t.segments; s++) {
+          phases.push({ phase: 'free', duration: t.freeTime, round: r, segment: s, totalSegments: t.segments, label: 'Work' });
+          phases.push({ phase: 'explosive', duration: t.expTime, round: r, segment: s, totalSegments: t.segments, label: 'Explosive!' });
+          phases.push({ phase: 'rest', duration: t.rest, round: r, segment: s, totalSegments: t.segments, label: 'Rest' });
+        }
+      }
+      return phases;
+    }
+  }
+
+  const phases = useRef(buildPhases(timer));
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(phases.current[0]?.duration || 0);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const intervalRef = useRef(null);
+
+  const currentPhase = phases.current[phaseIdx];
+
+  function startInterval() {
+    intervalRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          // advance phase
+          setPhaseIdx(prev => {
+            const next = prev + 1;
+            if (next >= phases.current.length) {
+              clearInterval(intervalRef.current);
+              setRunning(false);
+              setDone(true);
+              playBeep('end');
+              return prev;
+            }
+            playBeep('end');
+            const nextPhase = phases.current[next];
+            setTimeLeft(nextPhase.duration);
+            return next;
+          });
+          return 0;
+        }
+        // warn beep
+        const ph = phases.current[phaseIdx];
+        if (ph && ph.phase !== 'rest' && t === (timer.explosive?.warnTime || 0) + 1) {
+          // already handled by explosive phase
+        }
+        if (t <= 3 && t > 0) playBeep('tick');
+        return t - 1;
+      });
+    }, 1000);
+  }
+
+  function handleStartStop() {
+    if (done) return;
+    if (running) {
+      clearInterval(intervalRef.current);
+      setRunning(false);
+    } else {
+      playBeep('start');
+      setRunning(true);
+      startInterval();
+    }
+  }
+
+  useEffect(() => {
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  // Rebuild if timer changes
+  useEffect(() => {
+    clearInterval(intervalRef.current);
+    phases.current = buildPhases(timer);
+    setPhaseIdx(0);
+    setTimeLeft(phases.current[0]?.duration || 0);
+    setRunning(false);
+    setDone(false);
+  }, [timer.id]);
+
+  // phaseIdx change → reset timeLeft if needed (handled above in setPhaseIdx)
+
+  const phase = done ? 'done' : currentPhase?.phase;
+  const clockClass = `clock${phase==='rest'?' rest':phase==='explosive'?' explosive':''}`;
+
+  return (
+    <div className="screen">
+      {/* Timer selector */}
+      <div className="timer-cards">
+        {timers.map(t => (
+          <div key={t.id} className={`timer-card${t.id===timer.id?' active':''}`}
+            onClick={() => onSelectTimer(t)}>
+            <div className="label">{t.type==='power'?'Power':'Classic'}</div>
+            <div className="value">{t.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {done ? (
+        <div className="done-screen">
+          <div className="icon">🥊</div>
+          <h2>Workout Done!</h2>
+          <p style={{marginTop:8}}>Great work, champion.</p>
+          <button className="btn btn-primary" style={{width:'100%',marginTop:24}} onClick={onReset}>
+            New Round
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="clock-wrap">
+            <div className="round-label">
+              Round {currentPhase?.round}
+              {timer.rounds !== Infinity ? ` / ${timer.rounds}` : ''}
+            </div>
+            <div className={clockClass}>{fmt(timeLeft)}</div>
+            <div className={`phase-label${phase==='rest'?' rest':phase==='explosive'?' explosive':''}`}>
+              {currentPhase?.label || ''}
+            </div>
+            {isPower && currentPhase?.segment && (
+              <div className="segment-label">
+                Segment {currentPhase.segment} / {currentPhase.totalSegments}
+              </div>
+            )}
+          </div>
+
+          <div className="btn-row">
+            <button className="btn btn-secondary" onClick={onReset}>Reset</button>
+            <button className="btn btn-primary" onClick={handleStartStop}>
+              {running ? 'Stop' : 'Start'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// APP
+// ══════════════════════════════════════════════════════════
+function App() {
+  const [timers, setTimers] = useState(loadTimers);
+  const [selectedId, setSelectedId] = useState(loadLastId);
+  const [timerKey, setTimerKey] = useState(0); // force remount on reset
+
+  const selectedTimer = timers.find(t => t.id === selectedId) || timers[0];
+
+  function handleCreate(timer) {
+    const next = [...timers, timer];
+    setTimers(next);
+    saveTimers(next);
+    setSelectedId(timer.id);
+    saveLastId(timer.id);
+    setTimerKey(k => k + 1);
+  }
+
+  function handleSelectTimer(t) {
+    setSelectedId(t.id);
+    saveLastId(t.id);
+    setTimerKey(k => k + 1);
+  }
+
+  function handleReset() {
+    setTimerKey(k => k + 1);
+  }
+
+  return (
+    <div>
+      <RunningTimer
+        key={timerKey}
+        timer={selectedTimer}
+        onReset={handleReset}
+        onSelectTimer={handleSelectTimer}
+        timers={timers}
+      />
+      <div style={{height:24}} />
+      <div className="divider" />
+      <div style={{height:24}} />
+      <CreateForm onCreate={handleCreate} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
