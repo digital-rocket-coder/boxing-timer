@@ -2,211 +2,256 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Boxing Timer</title>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
+    :root {
+      --accent: #e85d26;
+      --accent-dim: rgba(232,93,38,.15);
+      --green: #34c759;
+      --green-dim: rgba(52,199,89,.15);
+      --red: #ff3b30;
+      --red-dim: rgba(255,59,48,.15);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #0a0a0a;
-      color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: var(--tg-theme-bg-color, #0d0d0d);
+      color: var(--tg-theme-text-color, #ffffff);
+      min-height: 100dvh;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+      overscroll-behavior: none;
     }
 
-    #root { width: 100%; max-width: 420px; padding: 24px 16px; }
-
-    /* ── Layout ── */
-    .screen { display: flex; flex-direction: column; gap: 20px; }
+    #root { width: 100%; }
 
     /* ── Timer cards ── */
     .timer-cards {
       display: flex;
-      gap: 10px;
+      gap: 8px;
+      padding: 12px 16px 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
+    .timer-cards::-webkit-scrollbar { display: none; }
+
     .timer-card {
-      flex: 1;
-      background: #1a1a1a;
+      flex-shrink: 0;
+      background: var(--tg-theme-secondary-bg-color, #1c1c1e);
       border: 2px solid transparent;
       border-radius: 14px;
-      padding: 14px 10px;
+      padding: 10px 16px;
       text-align: center;
       cursor: pointer;
-      transition: all .2s;
-      user-select: none;
+      transition: all .18s;
+      min-width: 80px;
     }
-    .timer-card:hover { background: #222; }
     .timer-card.active {
-      border-color: #e63;
-      background: #1f1108;
+      border-color: var(--accent);
+      background: var(--accent-dim);
     }
-    .timer-card .label {
-      font-size: 11px;
-      color: #888;
+    .timer-card .tc-label {
+      font-size: 10px;
+      color: var(--tg-theme-hint-color, #8e8e93);
       text-transform: uppercase;
       letter-spacing: .05em;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
-    .timer-card .value {
-      font-size: 22px;
+    .timer-card .tc-value {
+      font-size: 16px;
       font-weight: 700;
-      color: #fff;
     }
-    .timer-card.active .value { color: #e63; }
+    .timer-card.active .tc-value { color: var(--accent); }
 
-    /* ── Big clock ── */
-    .clock-wrap {
+    /* ── Clock area ── */
+    .clock-area {
+      padding: 16px 16px 8px;
       text-align: center;
-      padding: 20px 0;
     }
-    .round-label {
-      font-size: 14px;
-      color: #888;
+    .round-info {
+      font-size: 13px;
+      color: var(--tg-theme-hint-color, #8e8e93);
       text-transform: uppercase;
-      letter-spacing: .1em;
-      margin-bottom: 8px;
+      letter-spacing: .08em;
+      margin-bottom: 6px;
     }
     .clock {
-      font-size: 96px;
+      font-size: clamp(80px, 22vw, 108px);
       font-weight: 800;
       line-height: 1;
       letter-spacing: -2px;
       font-variant-numeric: tabular-nums;
       font-family: 'SF Mono', 'Courier New', monospace;
-      color: #fff;
-      min-width: 260px;
+      transition: color .3s;
+    }
+    .clock.work  { color: var(--tg-theme-text-color, #fff); }
+    .clock.rest  { color: var(--green); }
+    .clock.boom  { color: var(--accent); }
+
+    .phase-badge {
       display: inline-block;
-    }
-    .clock.rest { color: #3a9; }
-    .clock.explosive { color: #e63; }
-    .phase-label {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: #888;
-      margin-top: 8px;
-      height: 18px;
-    }
-    .phase-label.rest { color: #3a9; }
-    .phase-label.explosive { color: #e63; }
-    .segment-label {
+      margin-top: 10px;
+      padding: 5px 16px;
+      border-radius: 20px;
       font-size: 12px;
-      color: #666;
-      margin-top: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      transition: all .3s;
+    }
+    .phase-badge.work  { background: rgba(255,255,255,.08); color: var(--tg-theme-hint-color, #8e8e93); }
+    .phase-badge.rest  { background: var(--green-dim); color: var(--green); }
+    .phase-badge.boom  { background: var(--red-dim); color: var(--red); }
+
+    .segment-info {
+      font-size: 12px;
+      color: var(--tg-theme-hint-color, #8e8e93);
+      margin-top: 6px;
+    }
+
+    /* ── Progress ring ── */
+    .progress-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 4px 0 0;
+      position: relative;
+    }
+    .progress-wrap svg { transform: rotate(-90deg); }
+    .progress-track { fill: none; stroke: rgba(255,255,255,.06); }
+    .progress-fill {
+      fill: none;
+      stroke-linecap: round;
+      transition: stroke-dashoffset .9s linear, stroke .3s;
+    }
+    .clock-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     /* ── Buttons ── */
     .btn-row {
       display: flex;
       gap: 10px;
+      padding: 0 16px;
     }
     .btn {
       flex: 1;
-      height: 56px;
+      height: 52px;
       border-radius: 14px;
       border: none;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       cursor: pointer;
-      transition: all .15s;
+      transition: opacity .15s, transform .1s;
       text-transform: uppercase;
       letter-spacing: .06em;
     }
-    .btn:active { transform: scale(.97); }
-    .btn-primary {
-      background: #e63;
-      color: #fff;
-    }
-    .btn-primary:hover { background: #f74; }
-    .btn-secondary {
-      background: #222;
-      color: #aaa;
-      border: 2px solid #333;
-    }
-    .btn-secondary:hover { background: #2a2a2a; color: #fff; }
-    .btn:disabled { opacity: .35; cursor: default; }
+    .btn:active { transform: scale(.97); opacity: .85; }
+    .btn-start  { background: var(--accent); color: #fff; }
+    .btn-stop   { background: var(--tg-theme-secondary-bg-color, #1c1c1e);
+                  color: var(--tg-theme-text-color, #fff);
+                  border: 2px solid rgba(255,255,255,.1); }
+    .btn-reset  { background: var(--tg-theme-secondary-bg-color, #1c1c1e);
+                  color: var(--tg-theme-hint-color, #8e8e93);
+                  border: 2px solid transparent; }
 
-    /* ── Create form ── */
-    .create-section {
-      background: #111;
-      border-radius: 18px;
-      padding: 20px;
+    /* ── Done screen ── */
+    .done-screen {
+      text-align: center;
+      padding: 40px 16px 24px;
     }
-    .section-title {
-      font-size: 16px;
+    .done-icon { font-size: 64px; margin-bottom: 16px; }
+    .done-title { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+    .done-sub { color: var(--tg-theme-hint-color, #8e8e93); font-size: 15px; }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,.06);
+      margin: 16px 0;
+    }
+
+    /* ── Create section ── */
+    .create-wrap {
+      padding: 0 16px 24px;
+    }
+    .create-title {
+      font-size: 17px;
       font-weight: 700;
-      color: #fff;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
+
     .tab-row {
       display: flex;
-      background: #1a1a1a;
+      background: var(--tg-theme-secondary-bg-color, #1c1c1e);
       border-radius: 10px;
-      padding: 4px;
-      margin-bottom: 20px;
-      gap: 4px;
+      padding: 3px;
+      margin-bottom: 18px;
+      gap: 3px;
     }
     .tab {
       flex: 1;
-      height: 36px;
+      height: 34px;
       border-radius: 8px;
       border: none;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all .15s;
       background: transparent;
-      color: #666;
+      color: var(--tg-theme-hint-color, #8e8e93);
+      transition: all .18s;
     }
-    .tab.active {
-      background: #e63;
-      color: #fff;
-    }
-    .tab .crown {
-      font-size: 11px;
-      margin-left: 3px;
-    }
+    .tab.active { background: var(--accent); color: #fff; }
 
-    /* Field */
-    .field { margin-bottom: 14px; }
+    .field { margin-bottom: 16px; }
     .field-label {
-      font-size: 12px;
-      color: #888;
+      font-size: 11px;
+      color: var(--tg-theme-hint-color, #8e8e93);
       text-transform: uppercase;
       letter-spacing: .06em;
       margin-bottom: 8px;
     }
+    .field-label em {
+      font-style: normal;
+      color: rgba(142,142,147,.5);
+      text-transform: none;
+    }
+
     .chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 7px;
     }
     .chip {
-      padding: 7px 14px;
+      padding: 6px 13px;
       border-radius: 8px;
-      background: #1a1a1a;
+      background: var(--tg-theme-secondary-bg-color, #1c1c1e);
       border: 2px solid transparent;
-      color: #aaa;
+      color: var(--tg-theme-hint-color, #8e8e93);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       transition: all .15s;
     }
-    .chip:hover { background: #222; color: #fff; }
-    .chip.selected {
-      border-color: #e63;
-      background: #1f1108;
-      color: #e63;
+    .chip:active { transform: scale(.95); }
+    .chip.sel {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      color: var(--accent);
     }
-    .chip.infinity { font-size: 18px; padding: 4px 14px; }
+    .chip.inf { font-size: 17px; padding: 3px 13px; }
 
-    /* Rounds grid */
     .rounds-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -214,279 +259,172 @@
     }
     .rounds-grid .chip { padding: 7px 4px; text-align: center; }
 
-    /* Sub-option */
-    .sub-option {
-      margin-top: 12px;
-      padding: 12px 14px;
-      background: #151515;
+    .sub-field {
+      margin-top: 10px;
+      padding: 12px;
+      background: rgba(255,255,255,.03);
       border-radius: 10px;
     }
-    .sub-option .field-label { margin-bottom: 6px; }
+    .sub-field .field-label { margin-bottom: 6px; }
+
+    .create-btn {
+      width: 100%;
+      height: 50px;
+      border-radius: 14px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      transition: opacity .15s;
+    }
+    .create-btn:disabled { opacity: .3; }
+    .create-btn:not(:disabled):active { opacity: .85; }
 
     /* ── Popup ── */
     .popup-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.75);
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: flex-end;
-      justify-content: center;
       z-index: 100;
     }
     .popup {
-      background: #111;
-      border-radius: 24px 24px 0 0;
-      padding: 32px 24px 40px;
+      background: var(--tg-theme-secondary-bg-color, #1c1c1e);
+      border-radius: 20px 20px 0 0;
+      padding: 28px 20px calc(env(safe-area-inset-bottom,0px) + 28px);
       width: 100%;
-      max-width: 420px;
       text-align: center;
     }
-    .popup .crown-icon { font-size: 48px; margin-bottom: 12px; }
-    .popup h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
-    .popup p { font-size: 15px; color: #888; line-height: 1.5; margin-bottom: 24px; }
-    .popup .price {
-      font-size: 32px;
-      font-weight: 800;
-      color: #e63;
-      margin-bottom: 20px;
-    }
-    .popup .price span { font-size: 16px; color: #666; font-weight: 400; }
-
-    /* ── Misc ── */
-    .divider { height: 1px; background: #1a1a1a; }
-    .done-screen {
-      text-align: center;
-      padding: 40px 0;
-    }
-    .done-screen .icon { font-size: 64px; margin-bottom: 16px; }
-    .done-screen h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
-    .done-screen p { color: #888; font-size: 15px; }
+    .popup-icon { font-size: 44px; margin-bottom: 10px; }
+    .popup h2 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .popup p { font-size: 14px; color: var(--tg-theme-hint-color, #8e8e93); line-height: 1.5; margin-bottom: 20px; }
+    .popup-price { font-size: 28px; font-weight: 800; color: var(--accent); margin-bottom: 18px; }
+    .popup-price span { font-size: 14px; color: var(--tg-theme-hint-color, #8e8e93); font-weight: 400; }
+    .popup .btn-row { padding: 0; flex-direction: column; gap: 8px; }
+    .popup .btn { flex: none; width: 100%; }
   </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef } = React;
 
-// ── Audio helpers ──────────────────────────────────────────
-function createBeep(ctx, freq, dur, vol = 0.4) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value = freq;
-  osc.type = 'square';
-  gain.gain.setValueAtTime(vol, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + dur);
+// ── Telegram SDK ───────────────────────────────────────────
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+function haptic(type) {
+  try {
+    if (type === 'light')   tg?.HapticFeedback?.impactOccurred('light');
+    if (type === 'medium')  tg?.HapticFeedback?.impactOccurred('medium');
+    if (type === 'heavy')   tg?.HapticFeedback?.impactOccurred('heavy');
+    if (type === 'success') tg?.HapticFeedback?.notificationOccurred('success');
+    if (type === 'warning') tg?.HapticFeedback?.notificationOccurred('warning');
+  } catch {}
 }
 
-function playBeep(type) {
+// ── Audio ──────────────────────────────────────────────────
+function beep(type) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (type === 'start') {
-      createBeep(ctx, 880, 0.15);
-      setTimeout(() => createBeep(ctx, 1100, 0.2), 160);
-    } else if (type === 'end') {
-      createBeep(ctx, 1100, 0.12);
-      setTimeout(() => createBeep(ctx, 880, 0.12), 140);
-      setTimeout(() => createBeep(ctx, 660, 0.25), 280);
-    } else if (type === 'warn') {
-      createBeep(ctx, 660, 0.1);
-      setTimeout(() => createBeep(ctx, 660, 0.1), 150);
-      setTimeout(() => createBeep(ctx, 880, 0.15), 300);
-    } else if (type === 'tick') {
-      createBeep(ctx, 440, 0.06, 0.2);
-    }
-  } catch(e) {}
+    const play = (freq, dur, delay = 0, vol = 0.35) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = freq; o.type = 'square';
+      const t = ctx.currentTime + delay;
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.start(t); o.stop(t + dur);
+    };
+    if (type === 'start')   { play(880,.12); play(1100,.18,.14); }
+    if (type === 'end')     { play(1100,.1); play(880,.1,.13); play(660,.22,.26); }
+    if (type === 'warn')    { play(660,.08); play(660,.08,.12); play(880,.12,.24); }
+    if (type === 'tick')    { play(440,.05,0,.18); }
+  } catch {}
 }
 
-// ── Default timers ─────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────
+function fmt(sec) {
+  return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+}
+
 const DEFAULT_TIMERS = [
-  { id: 'default-3', type: 'classic', label: '3 min', roundTime: 180, rest: 60, rounds: 3, explosive: null },
-  { id: 'default-5', type: 'classic', label: '5 min', roundTime: 300, rest: 60, rounds: 3, explosive: null },
+  { id:'d3', type:'classic', label:'3 min', roundTime:180, rest:60, rounds:3, explosive:null },
+  { id:'d5', type:'classic', label:'5 min', roundTime:300, rest:60, rounds:3, explosive:null },
 ];
 
-// ── Utility ────────────────────────────────────────────────
-function fmt(sec) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-}
-
-// ── Storage helpers ────────────────────────────────────────
 function loadTimers() {
-  try { return JSON.parse(localStorage.getItem('bt_timers') || 'null') || DEFAULT_TIMERS; } catch { return DEFAULT_TIMERS; }
+  try { return JSON.parse(localStorage.getItem('bt2_timers')||'null') || DEFAULT_TIMERS; } catch { return DEFAULT_TIMERS; }
 }
-function saveTimers(t) { localStorage.setItem('bt_timers', JSON.stringify(t)); }
-function loadLastId() { return localStorage.getItem('bt_last') || DEFAULT_TIMERS[0].id; }
-function saveLastId(id) { localStorage.setItem('bt_last', id); }
+function saveTimers(t) { try { localStorage.setItem('bt2_timers', JSON.stringify(t)); } catch {} }
+function loadLastId() { return localStorage.getItem('bt2_last') || 'd3'; }
+function saveLastId(id) { try { localStorage.setItem('bt2_last', id); } catch {} }
 
-// ══════════════════════════════════════════════════════════
-// CREATE FORM
-// ══════════════════════════════════════════════════════════
-function Chip({ label, selected, onClick, className = '' }) {
-  return <button className={`chip${selected?' selected':''}${className?' '+className:''}`} onClick={onClick}>{label}</button>;
-}
+// ── Phase builder ──────────────────────────────────────────
+function buildPhases(t) {
+  const totalRounds = t.rounds === Infinity ? 999 : t.rounds;
+  const phases = [];
 
-function CreateForm({ onCreate }) {
-  const [tab, setTab] = useState('classic');
-  const [showPowerPopup, setShowPowerPopup] = useState(false);
-
-  // Classic
-  const [cRoundTime, setCRoundTime] = useState(null);
-  const [cRest, setCRest] = useState(null);
-  const [cRounds, setCRounds] = useState(null);
-  const [cExplosive, setCExplosive] = useState(null); // null | 'end_minute' | 'end_round'
-  const [cWarnTime, setCWarnTime] = useState(null);
-
-  // Power
-  const [pSegments, setPSegments] = useState(null);
-  const [pFreeTime, setPFreeTime] = useState(null);
-  const [pExpTime, setPExpTime] = useState(null);
-  const [pRest, setPRest] = useState(null);
-  const [pRounds, setPRounds] = useState(null);
-
-  const classicValid = cRoundTime && cRest && cRounds;
-  const powerValid = pSegments && pFreeTime && pExpTime && pRest && pRounds;
-
-  function handleCreate() {
-    if (tab === 'classic') {
-      const timer = {
-        id: Date.now().toString(),
-        type: 'classic',
-        label: fmt(cRoundTime),
-        roundTime: cRoundTime,
-        rest: cRest,
-        rounds: cRounds === '∞' ? Infinity : cRounds,
-        explosive: cExplosive ? { trigger: cExplosive, warnTime: cWarnTime || 10 } : null,
-      };
-      onCreate(timer);
-    } else {
-      const timer = {
-        id: Date.now().toString(),
-        type: 'power',
-        label: `${pSegments}×`,
-        segments: pSegments,
-        freeTime: pFreeTime,
-        expTime: pExpTime,
-        rest: pRest,
-        rounds: pRounds === '∞' ? Infinity : pRounds,
-      };
-      onCreate(timer);
+  if (t.type === 'classic') {
+    for (let r = 1; r <= totalRounds; r++) {
+      if (t.explosive?.trigger === 'end_minute') {
+        const w = t.explosive.warnTime;
+        const mins = Math.floor(t.roundTime / 60);
+        for (let m = 0; m < mins; m++) {
+          phases.push({ phase:'work', dur: 60-w, round:r, label:'Round' });
+          phases.push({ phase:'boom', dur: w,    round:r, label:'Explosive!' });
+        }
+        const rem = t.roundTime % 60;
+        if (rem > 0) phases.push({ phase:'work', dur:rem, round:r, label:'Round' });
+      } else if (t.explosive?.trigger === 'end_round') {
+        const w = t.explosive.warnTime;
+        phases.push({ phase:'work', dur: t.roundTime-w, round:r, label:'Round' });
+        phases.push({ phase:'boom', dur: w,             round:r, label:'Explosive!' });
+      } else {
+        phases.push({ phase:'work', dur: t.roundTime, round:r, label:'Round' });
+      }
+      if (r < totalRounds)
+        phases.push({ phase:'rest', dur: t.rest, round:r, label:'Rest' });
+    }
+  } else {
+    for (let r = 1; r <= totalRounds; r++) {
+      for (let s = 1; s <= t.segments; s++) {
+        phases.push({ phase:'work', dur:t.freeTime, round:r, seg:s, segs:t.segments, label:'Work' });
+        phases.push({ phase:'boom', dur:t.expTime,  round:r, seg:s, segs:t.segments, label:'Explosive!' });
+        phases.push({ phase:'rest', dur:t.rest,     round:r, seg:s, segs:t.segments, label:'Rest' });
+      }
     }
   }
+  return phases;
+}
 
-  const restOptions = [30, 60, 120, 180];
-  const roundTimeOptions = [60,90,120,150,180,210,240,270,300,360,420,480,540,600];
-  const warnOptions = [5,10,15,20,30];
-  const freeTimeOptions = [10,20,30,40,60,120,180,240,300];
-  const expTimeOptions = [5,10,15,20,25,30,35,40,45,50,60];
+// ── Progress ring ──────────────────────────────────────────
+const R = 110, CX = 120, CY = 120, STROKE = 8;
+const CIRC = 2 * Math.PI * R;
 
+function ProgressRing({ timeLeft, total, phase }) {
+  const pct = total > 0 ? timeLeft / total : 1;
+  const offset = CIRC * (1 - pct);
+  const color = phase === 'rest' ? 'var(--green)' : phase === 'boom' ? 'var(--accent)' : 'rgba(255,255,255,.45)';
   return (
-    <div className="create-section">
-      <div className="section-title">New Timer</div>
-      <div className="tab-row">
-        <button className={`tab${tab==='classic'?' active':''}`} onClick={() => setTab('classic')}>Classic</button>
-        <button className={`tab${tab==='power'?' active':''}`} onClick={() => { setTab('power'); setShowPowerPopup(true); }}>
-          Power <span className="crown">👑</span>
-        </button>
-      </div>
-
-      {tab === 'classic' && <>
-        <div className="field">
-          <div className="field-label">Round Time</div>
-          <div className="chips">
-            {roundTimeOptions.map(s => <Chip key={s} label={fmt(s)} selected={cRoundTime===s} onClick={() => setCRoundTime(s)} />)}
-          </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Rest</div>
-          <div className="chips">
-            {restOptions.map(s => <Chip key={s} label={s<60?`${s}s`:fmt(s)} selected={cRest===s} onClick={() => setCRest(s)} />)}
-          </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Rounds</div>
-          <div className="chips rounds-grid">
-            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n => <Chip key={n} label={n} selected={cRounds===n} onClick={() => setCRounds(n)} />)}
-            <Chip label="∞" selected={cRounds==='∞'} onClick={() => setCRounds('∞')} className="infinity" />
-          </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Add Explosive Work <span style={{color:'#444',fontStyle:'italic',textTransform:'none'}}>optional</span></div>
-          <div className="chips">
-            <Chip label="End of minute" selected={cExplosive==='end_minute'} onClick={() => setCExplosive(cExplosive==='end_minute'?null:'end_minute')} />
-            <Chip label="End of round" selected={cExplosive==='end_round'} onClick={() => setCExplosive(cExplosive==='end_round'?null:'end_round')} />
-          </div>
-          {cExplosive && <div className="sub-option">
-            <div className="field-label">Warning before explosive (sec)</div>
-            <div className="chips">
-              {warnOptions.map(s => <Chip key={s} label={`${s}s`} selected={cWarnTime===s} onClick={() => setCWarnTime(s)} />)}
-            </div>
-          </div>}
-        </div>
-        <button className="btn btn-primary" style={{width:'100%',marginTop:4}} disabled={!classicValid} onClick={handleCreate}>
-          Create Timer
-        </button>
-      </>}
-
-      {tab === 'power' && <>
-        <div className="field">
-          <div className="field-label">Round Segments</div>
-          <div className="chips rounds-grid">
-            {[1,2,3,4,5,6,7,8,9,10].map(n => <Chip key={n} label={n} selected={pSegments===n} onClick={() => setPSegments(n)} />)}
-          </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Free Work Time</div>
-          <div className="chips">
-            {freeTimeOptions.map(s => <Chip key={s} label={s<60?`${s}s`:fmt(s)} selected={pFreeTime===s} onClick={() => setPFreeTime(s)} />)}
-          </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Explosive Work Time</div>
-          <div className="chips">
-            {expTimeOptions.map(s => <Chip key={s} label={s<60?`${s}s`:fmt(s)} selected={pExpTime===s} onClick={() => setPExpTime(s)} />)}
-          </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Rest</div>
-          <div className="chips">
-            {restOptions.map(s => <Chip key={s} label={s<60?`${s}s`:fmt(s)} selected={pRest===s} onClick={() => setPRest(s)} />)}
-          </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Rounds</div>
-          <div className="chips rounds-grid">
-            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n => <Chip key={n} label={n} selected={pRounds===n} onClick={() => setPRounds(n)} />)}
-            <Chip label="∞" selected={pRounds==='∞'} onClick={() => setPRounds('∞')} className="infinity" />
-          </div>
-        </div>
-        <button className="btn btn-primary" style={{width:'100%',marginTop:4}} disabled={!powerValid} onClick={handleCreate}>
-          Create Timer
-        </button>
-      </>}
-
-      {showPowerPopup && (
-        <div className="popup-overlay" onClick={() => setShowPowerPopup(false)}>
-          <div className="popup" onClick={e => e.stopPropagation()}>
-            <div className="crown-icon">👑</div>
-            <h2>Power Timer</h2>
-            <p>Advanced explosive work intervals for serious fighters. Customise every second of your training.</p>
-            <div className="price">$4.99 <span>/ one-time</span></div>
-            <button className="btn btn-primary" style={{width:'100%',marginBottom:10}} onClick={() => setShowPowerPopup(false)}>
-              Unlock Power Timer
-            </button>
-            <button className="btn btn-secondary" style={{width:'100%'}} onClick={() => { setShowPowerPopup(false); setTab('classic'); }}>
-              Maybe later
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    <svg width={CX*2} height={CY*2} viewBox={`0 0 ${CX*2} ${CY*2}`}>
+      <circle className="progress-track" cx={CX} cy={CY} r={R} strokeWidth={STROKE} />
+      <circle className="progress-fill"
+        cx={CX} cy={CY} r={R} strokeWidth={STROKE}
+        stroke={color}
+        strokeDasharray={CIRC}
+        strokeDashoffset={offset}
+      />
+    </svg>
   );
 }
 
@@ -494,172 +432,110 @@ function CreateForm({ onCreate }) {
 // RUNNING TIMER
 // ══════════════════════════════════════════════════════════
 function RunningTimer({ timer, onReset, onSelectTimer, timers }) {
-  // phases: 'round' | 'explosive' | 'rest' | 'done'
-  // For power timer segment phases: 'free' | 'explosive' | 'rest'
-
-  const isPower = timer.type === 'power';
-
-  // Build phase sequence
-  function buildPhases(t) {
-    if (t.type === 'classic') {
-      const totalRounds = t.rounds === Infinity ? 999 : t.rounds;
-      const phases = [];
-      for (let r = 1; r <= totalRounds; r++) {
-        if (t.explosive && t.explosive.trigger === 'end_minute') {
-          // Split round into minutes, add explosive before each minute boundary
-          const warnTime = t.explosive.warnTime;
-          const totalMin = Math.floor(t.roundTime / 60);
-          for (let m = 0; m < totalMin; m++) {
-            const minuteWork = 60 - warnTime;
-            phases.push({ phase: 'round', duration: minuteWork, round: r, label: 'Round' });
-            phases.push({ phase: 'explosive', duration: warnTime, round: r, label: 'Explosive!' });
-          }
-          const remainder = t.roundTime % 60;
-          if (remainder > 0) {
-            phases.push({ phase: 'round', duration: remainder, round: r, label: 'Round' });
-          }
-        } else if (t.explosive && t.explosive.trigger === 'end_round') {
-          const warnTime = t.explosive.warnTime;
-          phases.push({ phase: 'round', duration: t.roundTime - warnTime, round: r, label: 'Round' });
-          phases.push({ phase: 'explosive', duration: warnTime, round: r, label: 'Explosive!' });
-        } else {
-          phases.push({ phase: 'round', duration: t.roundTime, round: r, label: 'Round' });
-        }
-        if (r < totalRounds) {
-          phases.push({ phase: 'rest', duration: t.rest, round: r, label: 'Rest' });
-        }
-      }
-      return phases;
-    } else {
-      // Power
-      const totalRounds = t.rounds === Infinity ? 999 : t.rounds;
-      const phases = [];
-      for (let r = 1; r <= totalRounds; r++) {
-        for (let s = 1; s <= t.segments; s++) {
-          phases.push({ phase: 'free', duration: t.freeTime, round: r, segment: s, totalSegments: t.segments, label: 'Work' });
-          phases.push({ phase: 'explosive', duration: t.expTime, round: r, segment: s, totalSegments: t.segments, label: 'Explosive!' });
-          phases.push({ phase: 'rest', duration: t.rest, round: r, segment: s, totalSegments: t.segments, label: 'Rest' });
-        }
-      }
-      return phases;
-    }
-  }
-
   const phases = useRef(buildPhases(timer));
-  const [phaseIdx, setPhaseIdx] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(phases.current[0]?.duration || 0);
+  const [idx, setIdx]         = useState(0);
+  const [left, setLeft]       = useState(phases.current[0]?.dur || 0);
   const [running, setRunning] = useState(false);
-  const [done, setDone] = useState(false);
-  const intervalRef = useRef(null);
+  const [done, setDone]       = useState(false);
+  const ivRef  = useRef(null);
+  const idxRef = useRef(0);
 
-  const currentPhase = phases.current[phaseIdx];
+  idxRef.current = idx;
 
-  function startInterval() {
-    intervalRef.current = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) {
-          // advance phase
-          setPhaseIdx(prev => {
-            const next = prev + 1;
-            if (next >= phases.current.length) {
-              clearInterval(intervalRef.current);
-              setRunning(false);
-              setDone(true);
-              playBeep('end');
-              return prev;
-            }
-            playBeep('end');
-            const nextPhase = phases.current[next];
-            setTimeLeft(nextPhase.duration);
-            return next;
-          });
+  function tick() {
+    setLeft(prev => {
+      if (prev <= 1) {
+        const nextIdx = idxRef.current + 1;
+        if (nextIdx >= phases.current.length) {
+          clearInterval(ivRef.current);
+          setRunning(false);
+          setDone(true);
+          beep('end'); haptic('success');
           return 0;
         }
-        // warn beep
-        const ph = phases.current[phaseIdx];
-        if (ph && ph.phase !== 'rest' && t === (timer.explosive?.warnTime || 0) + 1) {
-          // already handled by explosive phase
-        }
-        if (t <= 3 && t > 0) playBeep('tick');
-        return t - 1;
-      });
-    }, 1000);
+        beep('end'); haptic('medium');
+        const next = phases.current[nextIdx];
+        setIdx(nextIdx);
+        return next.dur;
+      }
+      if (prev <= 4) { beep('tick'); haptic('light'); }
+      return prev - 1;
+    });
   }
 
   function handleStartStop() {
     if (done) return;
     if (running) {
-      clearInterval(intervalRef.current);
+      clearInterval(ivRef.current);
       setRunning(false);
+      haptic('light');
     } else {
-      playBeep('start');
+      beep('start'); haptic('medium');
       setRunning(true);
-      startInterval();
+      ivRef.current = setInterval(tick, 1000);
     }
   }
 
-  useEffect(() => {
-    return () => clearInterval(intervalRef.current);
-  }, []);
+  useEffect(() => () => clearInterval(ivRef.current), []);
 
-  // Rebuild if timer changes
   useEffect(() => {
-    clearInterval(intervalRef.current);
+    clearInterval(ivRef.current);
     phases.current = buildPhases(timer);
-    setPhaseIdx(0);
-    setTimeLeft(phases.current[0]?.duration || 0);
+    setIdx(0);
+    setLeft(phases.current[0]?.dur || 0);
     setRunning(false);
     setDone(false);
   }, [timer.id]);
 
-  // phaseIdx change → reset timeLeft if needed (handled above in setPhaseIdx)
-
-  const phase = done ? 'done' : currentPhase?.phase;
-  const clockClass = `clock${phase==='rest'?' rest':phase==='explosive'?' explosive':''}`;
+  const cur   = phases.current[idx];
+  const phase = done ? 'work' : (cur?.phase || 'work');
 
   return (
-    <div className="screen">
-      {/* Timer selector */}
+    <div>
       <div className="timer-cards">
         {timers.map(t => (
-          <div key={t.id} className={`timer-card${t.id===timer.id?' active':''}`}
-            onClick={() => onSelectTimer(t)}>
-            <div className="label">{t.type==='power'?'Power':'Classic'}</div>
-            <div className="value">{t.label}</div>
+          <div key={t.id}
+            className={`timer-card${t.id === timer.id ? ' active' : ''}`}
+            onClick={() => { haptic('light'); onSelectTimer(t); }}>
+            <div className="tc-label">{t.type === 'power' ? '👑 Power' : 'Classic'}</div>
+            <div className="tc-value">{t.label}</div>
           </div>
         ))}
       </div>
 
       {done ? (
         <div className="done-screen">
-          <div className="icon">🥊</div>
-          <h2>Workout Done!</h2>
-          <p style={{marginTop:8}}>Great work, champion.</p>
-          <button className="btn btn-primary" style={{width:'100%',marginTop:24}} onClick={onReset}>
-            New Round
-          </button>
+          <div className="done-icon">🥊</div>
+          <div className="done-title">Workout Done!</div>
+          <div className="done-sub">Great work, champion.</div>
+          <div style={{height:28}} />
+          <div style={{padding:'0 16px'}}>
+            <button className="create-btn" onClick={() => { haptic('medium'); onReset(); }}>
+              New Round
+            </button>
+          </div>
         </div>
       ) : (
         <>
-          <div className="clock-wrap">
-            <div className="round-label">
-              Round {currentPhase?.round}
-              {timer.rounds !== Infinity ? ` / ${timer.rounds}` : ''}
+          <div className="clock-area">
+            <div className="round-info">
+              Round {cur?.round}{timer.rounds !== Infinity ? ` / ${timer.rounds}` : ''}
             </div>
-            <div className={clockClass}>{fmt(timeLeft)}</div>
-            <div className={`phase-label${phase==='rest'?' rest':phase==='explosive'?' explosive':''}`}>
-              {currentPhase?.label || ''}
-            </div>
-            {isPower && currentPhase?.segment && (
-              <div className="segment-label">
-                Segment {currentPhase.segment} / {currentPhase.totalSegments}
+            <div className="progress-wrap">
+              <ProgressRing timeLeft={left} total={cur?.dur || 1} phase={phase} />
+              <div className="clock-inner">
+                <div className={`clock ${phase}`}>{fmt(left)}</div>
+                <div className={`phase-badge ${phase}`}>{cur?.label}</div>
+                {cur?.seg && (
+                  <div className="segment-info">Segment {cur.seg} / {cur.segs}</div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           <div className="btn-row">
-            <button className="btn btn-secondary" onClick={onReset}>Reset</button>
-            <button className="btn btn-primary" onClick={handleStartStop}>
+            <button className="btn btn-reset" onClick={() => { haptic('light'); onReset(); }}>Reset</button>
+            <button className={`btn ${running ? 'btn-stop' : 'btn-start'}`} onClick={handleStartStop}>
               {running ? 'Stop' : 'Start'}
             </button>
           </div>
@@ -670,46 +546,179 @@ function RunningTimer({ timer, onReset, onSelectTimer, timers }) {
 }
 
 // ══════════════════════════════════════════════════════════
+// CREATE FORM
+// ══════════════════════════════════════════════════════════
+function Chip({ label, sel, onClick, className='' }) {
+  return (
+    <button
+      className={`chip${sel?' sel':''}${className?' '+className:''}`}
+      onClick={() => { haptic('light'); onClick(); }}>
+      {label}
+    </button>
+  );
+}
+
+function CreateForm({ onCreate }) {
+  const [tab, setTab]   = useState('classic');
+  const [popup, setPopup] = useState(false);
+
+  const [cRT, setCRT]       = useState(null);
+  const [cRest, setCRest]   = useState(null);
+  const [cRounds, setCRounds] = useState(null);
+  const [cExp, setCExp]     = useState(null);
+  const [cWarn, setCWarn]   = useState(null);
+
+  const [pSegs, setPSegs]   = useState(null);
+  const [pFree, setPFree]   = useState(null);
+  const [pExp, setPExp]     = useState(null);
+  const [pRest, setPRest]   = useState(null);
+  const [pRounds, setPRounds] = useState(null);
+
+  const classicOk = cRT && cRest && cRounds;
+  const powerOk   = pSegs && pFree && pExp && pRest && pRounds;
+
+  function handleCreate() {
+    haptic('success');
+    if (tab === 'classic') {
+      onCreate({
+        id: Date.now().toString(), type:'classic',
+        label: fmt(cRT),
+        roundTime: cRT, rest: cRest,
+        rounds: cRounds === '∞' ? Infinity : cRounds,
+        explosive: cExp ? { trigger:cExp, warnTime:cWarn||10 } : null,
+      });
+    } else {
+      onCreate({
+        id: Date.now().toString(), type:'power',
+        label: `${pSegs}×`,
+        segments:pSegs, freeTime:pFree, expTime:pExp,
+        rest:pRest, rounds: pRounds === '∞' ? Infinity : pRounds,
+      });
+    }
+  }
+
+  const restOpts = [30, 60, 120, 180];
+  const rtOpts   = [60,90,120,150,180,210,240,270,300,360,420,480,540,600];
+  const warnOpts = [5,10,15,20,30];
+  const freeOpts = [10,20,30,40,60,120,180,240,300];
+  const expOpts  = [5,10,15,20,25,30,35,40,45,50,60];
+  const fmtS     = s => s < 60 ? `${s}s` : fmt(s);
+
+  return (
+    <div className="create-wrap">
+      <div className="create-title">New Timer</div>
+      <div className="tab-row">
+        <button className={`tab${tab==='classic'?' active':''}`}
+          onClick={() => { haptic('light'); setTab('classic'); }}>Classic</button>
+        <button className={`tab${tab==='power'?' active':''}`}
+          onClick={() => { haptic('light'); setTab('power'); setPopup(true); }}>Power 👑</button>
+      </div>
+
+      {tab === 'classic' && <>
+        <div className="field">
+          <div className="field-label">Round Time</div>
+          <div className="chips">{rtOpts.map(s=><Chip key={s} label={fmt(s)} sel={cRT===s} onClick={()=>setCRT(s)}/>)}</div>
+        </div>
+        <div className="field">
+          <div className="field-label">Rest</div>
+          <div className="chips">{restOpts.map(s=><Chip key={s} label={fmtS(s)} sel={cRest===s} onClick={()=>setCRest(s)}/>)}</div>
+        </div>
+        <div className="field">
+          <div className="field-label">Rounds</div>
+          <div className="chips rounds-grid">
+            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=><Chip key={n} label={n} sel={cRounds===n} onClick={()=>setCRounds(n)}/>)}
+            <Chip label="∞" sel={cRounds==='∞'} onClick={()=>setCRounds('∞')} className="inf"/>
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Add Explosive Work <em>· optional</em></div>
+          <div className="chips">
+            <Chip label="End of minute" sel={cExp==='end_minute'} onClick={()=>setCExp(cExp==='end_minute'?null:'end_minute')}/>
+            <Chip label="End of round"  sel={cExp==='end_round'}  onClick={()=>setCExp(cExp==='end_round'?null:'end_round')}/>
+          </div>
+          {cExp && <div className="sub-field">
+            <div className="field-label">Warning before explosive</div>
+            <div className="chips">{warnOpts.map(s=><Chip key={s} label={`${s}s`} sel={cWarn===s} onClick={()=>setCWarn(s)}/>)}</div>
+          </div>}
+        </div>
+        <button className="create-btn" disabled={!classicOk} onClick={handleCreate}>Create Timer</button>
+      </>}
+
+      {tab === 'power' && <>
+        <div className="field">
+          <div className="field-label">Round Segments</div>
+          <div className="chips rounds-grid">
+            {[1,2,3,4,5,6,7,8,9,10].map(n=><Chip key={n} label={n} sel={pSegs===n} onClick={()=>setPSegs(n)}/>)}
+          </div>
+        </div>
+        <div className="field">
+          <div className="field-label">Free Work Time</div>
+          <div className="chips">{freeOpts.map(s=><Chip key={s} label={fmtS(s)} sel={pFree===s} onClick={()=>setPFree(s)}/>)}</div>
+        </div>
+        <div className="field">
+          <div className="field-label">Explosive Work Time</div>
+          <div className="chips">{expOpts.map(s=><Chip key={s} label={fmtS(s)} sel={pExp===s} onClick={()=>setPExp(s)}/>)}</div>
+        </div>
+        <div className="field">
+          <div className="field-label">Rest</div>
+          <div className="chips">{restOpts.map(s=><Chip key={s} label={fmtS(s)} sel={pRest===s} onClick={()=>setPRest(s)}/>)}</div>
+        </div>
+        <div className="field">
+          <div className="field-label">Rounds</div>
+          <div className="chips rounds-grid">
+            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=><Chip key={n} label={n} sel={pRounds===n} onClick={()=>setPRounds(n)}/>)}
+            <Chip label="∞" sel={pRounds==='∞'} onClick={()=>setPRounds('∞')} className="inf"/>
+          </div>
+        </div>
+        <button className="create-btn" disabled={!powerOk} onClick={handleCreate}>Create Timer</button>
+      </>}
+
+      {popup && (
+        <div className="popup-overlay" onClick={()=>setPopup(false)}>
+          <div className="popup" onClick={e=>e.stopPropagation()}>
+            <div className="popup-icon">👑</div>
+            <h2>Power Timer</h2>
+            <p>Advanced explosive work intervals for serious fighters. Full control over every second of your training.</p>
+            <div className="popup-price">$4.99 <span>/ one-time</span></div>
+            <div className="btn-row">
+              <button className="btn btn-start" onClick={()=>setPopup(false)}>Unlock Power Timer</button>
+              <button className="btn btn-reset" style={{border:'2px solid rgba(255,255,255,.1)'}}
+                onClick={()=>{ setPopup(false); setTab('classic'); }}>Maybe later</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 // APP
 // ══════════════════════════════════════════════════════════
 function App() {
-  const [timers, setTimers] = useState(loadTimers);
-  const [selectedId, setSelectedId] = useState(loadLastId);
-  const [timerKey, setTimerKey] = useState(0); // force remount on reset
+  const [timers, setTimers]     = useState(loadTimers);
+  const [selId, setSelId]       = useState(loadLastId);
+  const [timerKey, setTimerKey] = useState(0);
 
-  const selectedTimer = timers.find(t => t.id === selectedId) || timers[0];
+  const timer = timers.find(t=>t.id===selId) || timers[0];
 
-  function handleCreate(timer) {
-    const next = [...timers, timer];
-    setTimers(next);
-    saveTimers(next);
-    setSelectedId(timer.id);
-    saveLastId(timer.id);
-    setTimerKey(k => k + 1);
-  }
-
-  function handleSelectTimer(t) {
-    setSelectedId(t.id);
-    saveLastId(t.id);
-    setTimerKey(k => k + 1);
-  }
-
-  function handleReset() {
-    setTimerKey(k => k + 1);
+  function handleCreate(t) {
+    const next = [...timers, t];
+    setTimers(next); saveTimers(next);
+    setSelId(t.id);  saveLastId(t.id);
+    setTimerKey(k=>k+1);
   }
 
   return (
     <div>
       <RunningTimer
         key={timerKey}
-        timer={selectedTimer}
-        onReset={handleReset}
-        onSelectTimer={handleSelectTimer}
+        timer={timer}
         timers={timers}
+        onReset={()=>setTimerKey(k=>k+1)}
+        onSelectTimer={t=>{ setSelId(t.id); saveLastId(t.id); setTimerKey(k=>k+1); }}
       />
-      <div style={{height:24}} />
       <div className="divider" />
-      <div style={{height:24}} />
       <CreateForm onCreate={handleCreate} />
     </div>
   );
