@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-  <title>Boxing Timer</title>
+  <title>Боксёрский таймер</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     :root {
-      --a:    #ff5c1a;
-      --a10:  rgba(255,92,26,.10);
-      --a20:  rgba(255,92,26,.20);
-      --g:    #34d058;
-      --g10:  rgba(52,208,88,.10);
-      --r:    #ff453a;
-      --r10:  rgba(255,69,58,.10);
+      --a:    #e8194b;
+      --a10:  rgba(232,25,75,.12);
+      --a20:  rgba(232,25,75,.22);
+      --g:    #30d158;
+      --g10:  rgba(48,209,88,.12);
+      --r:    #ff9f0a;
+      --r10:  rgba(255,159,10,.12);
       --bg:   var(--tg-theme-bg-color,#0c0c0e);
       --s1:   var(--tg-theme-secondary-bg-color,#18181c);
       --tx:   var(--tg-theme-text-color,#ffffff);
@@ -93,7 +93,7 @@
     .card-bar{
       position:absolute;left:0;top:0;bottom:0;width:3px;
       border-radius:3px 0 0 3px;
-      background:linear-gradient(180deg,var(--a),#ff9057);
+      background:linear-gradient(180deg,#e8194b,#ff6b35);
     }
     .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
     .card-name{font-size:17px;font-weight:700;line-height:1.3;padding-left:8px}
@@ -119,28 +119,28 @@
 
     .go{
       width:100%;height:48px;border-radius:14px;
-      background:linear-gradient(135deg,#ff5c1a,#ff8c4a);
+      background:linear-gradient(135deg,#e8194b,#ff6b35);
       border:none;color:#fff;font-size:15px;font-weight:700;
       letter-spacing:.04em;text-transform:uppercase;
       cursor:pointer;
-      box-shadow:0 4px 18px rgba(255,92,26,.35);
+      box-shadow:0 4px 18px rgba(232,25,75,.35);
       transition:opacity .15s,transform .12s,box-shadow .15s;
     }
-    .go:active{opacity:.85;transform:scale(.97);box-shadow:0 2px 8px rgba(255,92,26,.2)}
+    .go:active{opacity:.85;transform:scale(.97);box-shadow:0 2px 8px rgba(232,25,75,.2)}
 
     /* fab */
     .fab{
       position:fixed;bottom:calc(var(--sb)+20px);right:20px;
       width:56px;height:56px;border-radius:18px;
-      background:linear-gradient(135deg,#ff5c1a,#ff8040);
+      background:linear-gradient(135deg,#e8194b,#ff6b35);
       border:none;color:#fff;font-size:26px;
       display:flex;align-items:center;justify-content:center;
       cursor:pointer;
-      box-shadow:0 6px 24px rgba(255,92,26,.45);
+      box-shadow:0 6px 24px rgba(232,25,75,.45);
       transition:transform .15s,box-shadow .15s;
       z-index:10;
     }
-    .fab:active{transform:scale(.9);box-shadow:0 3px 12px rgba(255,92,26,.3)}
+    .fab:active{transform:scale(.9);box-shadow:0 3px 12px rgba(232,25,75,.3)}
 
     /* empty */
     .empty{
@@ -235,8 +235,8 @@
       cursor:pointer;transition:opacity .15s,transform .12s,box-shadow .15s;
     }
     .c-main.start{
-      background:linear-gradient(135deg,#ff5c1a,#ff8c4a);
-      box-shadow:0 4px 20px rgba(255,92,26,.4);
+      background:linear-gradient(135deg,#e8194b,#ff6b35);
+      box-shadow:0 4px 20px rgba(232,25,75,.4);
     }
     .c-main.stop{
       background:var(--s1);color:var(--tx);
@@ -263,10 +263,10 @@
     .dc-l{font-size:11px;color:var(--hi);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
     .done-btn{
       width:100%;height:52px;border-radius:16px;
-      background:linear-gradient(135deg,#ff5c1a,#ff8040);
+      background:linear-gradient(135deg,#e8194b,#ff6b35);
       border:none;color:#fff;font-size:16px;font-weight:700;
       cursor:pointer;letter-spacing:.04em;text-transform:uppercase;
-      box-shadow:0 4px 18px rgba(255,92,26,.35);
+      box-shadow:0 4px 18px rgba(232,25,75,.35);
       transition:opacity .15s;margin-bottom:10px;
     }
     .done-btn:active{opacity:.8}
@@ -328,10 +328,10 @@
     }
     .cta-btn{
       width:100%;height:52px;border-radius:16px;
-      background:linear-gradient(135deg,#ff5c1a,#ff8040);
+      background:linear-gradient(135deg,#e8194b,#ff6b35);
       border:none;color:#fff;font-size:16px;font-weight:700;
       cursor:pointer;letter-spacing:.05em;text-transform:uppercase;
-      box-shadow:0 4px 18px rgba(255,92,26,.35);
+      box-shadow:0 4px 18px rgba(232,25,75,.35);
       transition:opacity .15s;
     }
     .cta-btn:disabled{opacity:.28;pointer-events:none;box-shadow:none}
@@ -371,12 +371,12 @@ function beep(type){
 }
 
 const fmt = s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-const fmtS= s=>s<60?`${s}s`:fmt(s);
+const fmtS= s=>s<60?`${s}с`:fmt(s);
 
 const DEFAULTS=[
-  {id:'d1',label:'3 min Classic', roundTime:180,rest:60, rounds:3, explosive:null},
-  {id:'d2',label:'5 min Fighter', roundTime:300,rest:90, rounds:5, explosive:null},
-  {id:'d3',label:'Explosive 3',   roundTime:180,rest:60, rounds:3, explosive:{trigger:'end_round',warnTime:10}},
+  {id:'d1',label:'Классик 3 мин',  roundTime:180,rest:60, rounds:3, explosive:null},
+  {id:'d2',label:'Боец 5 мин',     roundTime:300,rest:90, rounds:5, explosive:null},
+  {id:'d3',label:'Взрывная 3 мин', roundTime:180,rest:60, rounds:3, explosive:{trigger:'end_round',warnTime:10}},
 ];
 const load=()=>{try{return JSON.parse(localStorage.getItem('bt4')||'null')||DEFAULTS}catch{return DEFAULTS}};
 const save=t=>{try{localStorage.setItem('bt4',JSON.stringify(t))}catch{}};
@@ -387,19 +387,19 @@ function buildPhases(t){
     if(t.explosive?.trigger==='end_minute'){
       const w=t.explosive.warnTime, mins=Math.floor(t.roundTime/60);
       for(let m=0;m<mins;m++){
-        ph.push({phase:'work',dur:60-w,round:r,label:'Round'});
-        ph.push({phase:'boom',dur:w,round:r,label:'Explosive!'});
+        ph.push({phase:'work',dur:60-w,round:r,label:'Раунд'});
+        ph.push({phase:'boom',dur:w,round:r,label:'Взрыв!'});
       }
       const rem=t.roundTime%60;
       if(rem>0) ph.push({phase:'work',dur:rem,round:r,label:'Round'});
     }else if(t.explosive?.trigger==='end_round'){
       const w=t.explosive.warnTime;
-      ph.push({phase:'work',dur:t.roundTime-w,round:r,label:'Round'});
-      ph.push({phase:'boom',dur:w,round:r,label:'Explosive!'});
+      ph.push({phase:'work',dur:t.roundTime-w,round:r,label:'Раунд'});
+      ph.push({phase:'boom',dur:w,round:r,label:'Взрыв!'});
     }else{
-      ph.push({phase:'work',dur:t.roundTime,round:r,label:'Round'});
+      ph.push({phase:'work',dur:t.roundTime,round:r,label:'Раунд'});
     }
-    if(r<N) ph.push({phase:'rest',dur:t.rest,round:r,label:'Rest'});
+    if(r<N) ph.push({phase:'rest',dur:t.rest,round:r,label:'Отдых'});
   }
   return ph;
 }
@@ -468,21 +468,21 @@ function TimerScreen({timer,onBack}){
     return(
       <div className="screen tscreen">
         <div className="topbar">
-          <button className="back" onClick={()=>{reset();onBack();}}>‹ Back</button>
+          <button className="back" onClick={()=>{reset();onBack();}}>‹ Назад</button>
           <div style={{fontSize:14,fontWeight:600,color:'var(--hi)'}}>{timer.label}</div>
           <div style={{width:48}}/>
         </div>
         <div className="done">
           <div className="done-ico">🥊</div>
-          <div className="done-h">Workout Done!</div>
-          <div className="done-p">Great work, champion</div>
+          <div className="done-h">Тренировка завершена!</div>
+          <div className="done-p">Отличная работа, чемпион</div>
           <div className="done-cards">
-            <div className="dc"><div className="dc-v">{totalR}</div><div className="dc-l">Rounds</div></div>
-            <div className="dc"><div className="dc-v">{fmt(timer.roundTime)}</div><div className="dc-l">Round time</div></div>
-            <div className="dc"><div className="dc-v">{fmtS(timer.rest)}</div><div className="dc-l">Rest</div></div>
+            <div className="dc"><div className="dc-v">{totalR}</div><div className="dc-l">Раундов</div></div>
+            <div className="dc"><div className="dc-v">{fmt(timer.roundTime)}</div><div className="dc-l">Раунд</div></div>
+            <div className="dc"><div className="dc-v">{fmtS(timer.rest)}</div><div className="dc-l">Отдых</div></div>
           </div>
-          <button className="done-btn" onClick={reset}>Go Again</button>
-          <button className="done-btn2" onClick={()=>{reset();onBack();}}>Back to Timers</button>
+          <button className="done-btn" onClick={reset}>Ещё раз</button>
+          <button className="done-btn2" onClick={()=>{reset();onBack();}}>К таймерам</button>
         </div>
       </div>
     );
@@ -491,7 +491,7 @@ function TimerScreen({timer,onBack}){
   return(
     <div className="screen tscreen">
       <div className="topbar">
-        <button className="back" onClick={()=>{stop();onBack();}}>‹ Back</button>
+        <button className="back" onClick={()=>{stop();onBack();}}>‹ Назад</button>
         <div style={{fontSize:14,fontWeight:600,color:'var(--hi)'}}>{timer.label}</div>
         <div style={{width:48}}/>
       </div>
@@ -501,9 +501,9 @@ function TimerScreen({timer,onBack}){
         <div className="phase-area">
           <span className={`phase-lbl ${phase}`}>
             <span className="phase-dot"/>
-            {cur?.label||'Ready'}
+            {cur?.label||'Готов'}
           </span>
-          <div className="round-lbl">Round {curR} / {totalR}</div>
+          <div className="round-lbl">Раунд {curR} / {totalR}</div>
         </div>
 
         {/* ring */}
@@ -525,9 +525,9 @@ function TimerScreen({timer,onBack}){
 
         {/* controls */}
         <div className="ctrls">
-          <button className="c-reset" onClick={reset}>Reset</button>
+          <button className="c-reset" onClick={reset}>Сброс</button>
           <button className={`c-main ${run?'stop':'start'}`} onClick={toggle}>
-            {run?'Stop':'Start'}
+            {run?'Стоп':'Старт'}
           </button>
         </div>
       </div>
@@ -551,7 +551,7 @@ function CreateScreen({onBack,onCreate}){
 
   function submit(){
     hap('s');
-    const label=name.trim()||`${fmt(rt)} · ${rds==='∞'?'∞':rds} rounds`;
+    const label=name.trim()||`${fmt(rt)} · ${rds==='∞'?'∞':rds} раундов`;
     onCreate({
       id:Date.now().toString(),label,
       roundTime:rt,rest,
@@ -563,21 +563,21 @@ function CreateScreen({onBack,onCreate}){
   return(
     <div className="screen">
       <div className="topbar">
-        <button className="back" onClick={onBack}>‹ Cancel</button>
-        <div style={{fontSize:17,fontWeight:700}}>New Timer</div>
+        <button className="back" onClick={onBack}>‹ Отмена</button>
+        <div style={{fontSize:17,fontWeight:700}}>Новый таймер</div>
         <div style={{width:60}}/>
       </div>
       <div className="scroll">
         <div className="crbody">
 
           <div className="cr-section">
-            <div className="cr-lbl">Name <em>· optional</em></div>
-            <input className="inp" placeholder="e.g. Morning session"
+            <div className="cr-lbl">Название <em>· необязательно</em></div>
+            <input className="inp" placeholder="например, Утренняя тренировка"
               value={name} onChange={e=>setName(e.target.value)} maxLength={30}/>
           </div>
 
           <div className="cr-section">
-            <div className="cr-lbl">Round Time</div>
+            <div className="cr-lbl">Время раунда</div>
             <div className="chips2">
               {[60,90,120,150,180,210,240,270,300,360,420,480,540,600].map(s=>(
                 <Ch key={s} label={fmt(s)} on={rt===s} onClick={()=>setRt(s)}/>
@@ -586,7 +586,7 @@ function CreateScreen({onBack,onCreate}){
           </div>
 
           <div className="cr-section">
-            <div className="cr-lbl">Rest</div>
+            <div className="cr-lbl">Отдых</div>
             <div className="chips2">
               {[30,60,90,120,180].map(s=>(
                 <Ch key={s} label={fmtS(s)} on={rest===s} onClick={()=>setRest(s)}/>
@@ -595,7 +595,7 @@ function CreateScreen({onBack,onCreate}){
           </div>
 
           <div className="cr-section">
-            <div className="cr-lbl">Rounds</div>
+            <div className="cr-lbl">Раунды</div>
             <div className="chips2 rgrid">
               {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=>(
                 <Ch key={n} label={n} on={rds===n} onClick={()=>setRds(n)}/>
@@ -605,14 +605,14 @@ function CreateScreen({onBack,onCreate}){
           </div>
 
           <div className="cr-section">
-            <div className="cr-lbl">Explosive Work <em>· optional</em></div>
+            <div className="cr-lbl">Взрывная работа <em>· необязательно</em></div>
             <div className="chips2">
-              <Ch label="End of each minute" on={exp==='end_minute'} onClick={()=>setExp(exp==='end_minute'?null:'end_minute')}/>
-              <Ch label="End of round"       on={exp==='end_round'}  onClick={()=>setExp(exp==='end_round' ?null:'end_round')} />
+              <Ch label="В конце каждой минуты" on={exp==='end_minute'} onClick={()=>setExp(exp==='end_minute'?null:'end_minute')}/>
+              <Ch label="В конце раунда"         on={exp==='end_round'}  onClick={()=>setExp(exp==='end_round' ?null:'end_round')} />
             </div>
             {exp&&(
               <div className="subbox">
-                <div className="cr-lbl" style={{marginBottom:9}}>Warning before explosive</div>
+                <div className="cr-lbl" style={{marginBottom:9}}>Предупреждение до взрыва</div>
                 <div className="chips2">
                   {[5,10,15,20,30].map(s=>(
                     <Ch key={s} label={`${s}s`} on={warn===s} onClick={()=>setWarn(s)}/>
@@ -625,7 +625,7 @@ function CreateScreen({onBack,onCreate}){
         </div>
       </div>
       <div className="cta-bar">
-        <button className="cta-btn" disabled={!ok} onClick={submit}>Save Timer</button>
+        <button className="cta-btn" disabled={!ok} onClick={submit}>Сохранить таймер</button>
       </div>
     </div>
   );
@@ -637,16 +637,16 @@ function ListScreen({timers,onStart,onCreate,onDelete,visible}){
     <div className={`screen${visible?'':' offleft'}`}>
       <div className="topbar">
         <div>
-          <div className="tbar-title">🥊 Boxing Timer</div>
-          <div className="tbar-sub">{timers.length} timer{timers.length!==1?'s':''} saved</div>
+          <div className="tbar-title">🥊 Боксёрский таймер</div>
+          <div className="tbar-sub">{timers.length} {timers.length===1?'таймер':timers.length<5?'таймера':'таймеров'} сохранено</div>
         </div>
       </div>
       <div className="scroll">
         {timers.length===0?(
           <div className="empty">
             <div className="empty-ico">⏱</div>
-            <div className="empty-h">No timers yet</div>
-            <div className="empty-p">Tap + to create your first boxing timer</div>
+            <div className="empty-h">Нет таймеров</div>
+            <div className="empty-p">Нажми +, чтобы создать первый боксёрский таймер</div>
           </div>
         ):(
           <div className="list">
@@ -661,11 +661,11 @@ function ListScreen({timers,onStart,onCreate,onDelete,visible}){
                   </div>
                   <div className="tags">
                     <span className="tag o">{fmt(t.roundTime)}</span>
-                    <span className="tag">{rounds} rounds</span>
-                    <span className="tag g">{fmtS(t.rest)} rest</span>
-                    {t.explosive&&<span className="tag r">💥 Explosive</span>}
+                    <span className="tag">{rounds} раундов</span>
+                    <span className="tag g">{fmtS(t.rest)} отдых</span>
+                    {t.explosive&&<span className="tag r">💥 Взрыв</span>}
                   </div>
-                  <button className="go" onClick={()=>{hap('m');onStart(t);}}>Start</button>
+                  <button className="go" onClick={()=>{hap('m');onStart(t);}}>Старт</button>
                 </div>
               );
             })}
