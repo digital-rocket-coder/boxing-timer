@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
   <title>Boxing Timer</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -10,773 +10,612 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     :root {
-      --accent:     #e85d26;
-      --accent-dim: rgba(232,93,38,.14);
-      --green:      #30d158;
-      --green-dim:  rgba(48,209,88,.14);
-      --red:        #ff453a;
-      --red-dim:    rgba(255,69,58,.14);
-      --bg:         var(--tg-theme-bg-color, #0d0d0d);
-      --bg2:        var(--tg-theme-secondary-bg-color, #1c1c1e);
-      --text:       var(--tg-theme-text-color, #ffffff);
-      --hint:       var(--tg-theme-hint-color, #8e8e93);
-      --safe-b:     env(safe-area-inset-bottom, 0px);
+      --a:    #ff5c1a;
+      --a10:  rgba(255,92,26,.10);
+      --a20:  rgba(255,92,26,.20);
+      --g:    #34d058;
+      --g10:  rgba(52,208,88,.10);
+      --r:    #ff453a;
+      --r10:  rgba(255,69,58,.10);
+      --bg:   var(--tg-theme-bg-color,#0c0c0e);
+      --s1:   var(--tg-theme-secondary-bg-color,#18181c);
+      --tx:   var(--tg-theme-text-color,#ffffff);
+      --hi:   var(--tg-theme-hint-color,#6e6e73);
+      --sb:   env(safe-area-inset-bottom,0px);
+      --st:   env(safe-area-inset-top,0px);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;overflow:hidden}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+      background:var(--bg);color:var(--tx);
+      overscroll-behavior:none;user-select:none;
+    }
+    #root{height:100%}
+
+    /* ─── screens ─── */
+    .screen{
+      position:fixed;inset:0;
+      display:flex;flex-direction:column;
+      background:var(--bg);
+      transition:transform .38s cubic-bezier(.3,0,.15,1);
+      will-change:transform;
+      z-index:1;
+    }
+    .screen.offright{transform:translateX(100%);pointer-events:none}
+    .screen.offleft {transform:translateX(-28%) scale(.96);pointer-events:none;opacity:.6}
+
+    .scroll{
+      flex:1;overflow-y:auto;overflow-x:hidden;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    }
+    .scroll::-webkit-scrollbar{display:none}
+
+    /* ─── topbar ─── */
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:calc(var(--st) + 14px) 20px 10px;
+      flex-shrink:0;
+    }
+    .tbar-title{font-size:24px;font-weight:800;letter-spacing:-.5px;line-height:1.15}
+    .tbar-sub{font-size:13px;color:var(--hi);margin-top:2px}
+    .tbar-right{display:flex;gap:8px}
+
+    .ibtn{
+      width:38px;height:38px;border-radius:11px;
+      background:var(--s1);border:none;
+      color:var(--tx);font-size:18px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:opacity .15s,transform .12s;
+    }
+    .ibtn:active{opacity:.5;transform:scale(.92)}
+
+    .back{
+      background:none;border:none;padding:4px 0;
+      color:var(--a);font-size:16px;font-weight:600;
+      cursor:pointer;display:flex;align-items:center;gap:2px;
+      transition:opacity .15s;
+    }
+    .back:active{opacity:.5}
+
+    /* ─── list ─── */
+    .list{padding:4px 16px calc(var(--sb)+80px);display:flex;flex-direction:column;gap:10px}
+
+    .card{
+      background:var(--s1);
+      border-radius:20px;
+      padding:18px 18px 14px;
+      display:flex;flex-direction:column;gap:14px;
+      position:relative;overflow:hidden;
+      transition:transform .12s;
+    }
+    .card:active{transform:scale(.985)}
+    .card-bar{
+      position:absolute;left:0;top:0;bottom:0;width:3px;
+      border-radius:3px 0 0 3px;
+      background:linear-gradient(180deg,var(--a),#ff9057);
+    }
+    .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .card-name{font-size:17px;font-weight:700;line-height:1.3;padding-left:8px}
+    .del{
+      width:26px;height:26px;border-radius:8px;
+      background:rgba(255,255,255,.06);border:none;
+      color:var(--hi);font-size:13px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;flex-shrink:0;
+      transition:background .15s,color .15s;
+    }
+    .del:active{background:var(--r10);color:var(--r)}
+
+    .tags{display:flex;flex-wrap:wrap;gap:6px;padding-left:8px}
+    .tag{
+      padding:4px 10px;border-radius:100px;
+      font-size:12px;font-weight:600;
+      background:rgba(255,255,255,.07);color:var(--hi);
+    }
+    .tag.o{background:var(--a10);color:var(--a)}
+    .tag.g{background:var(--g10);color:var(--g)}
+    .tag.r{background:var(--r10);color:var(--r)}
+
+    .go{
+      width:100%;height:48px;border-radius:14px;
+      background:linear-gradient(135deg,#ff5c1a,#ff8c4a);
+      border:none;color:#fff;font-size:15px;font-weight:700;
+      letter-spacing:.04em;text-transform:uppercase;
+      cursor:pointer;
+      box-shadow:0 4px 18px rgba(255,92,26,.35);
+      transition:opacity .15s,transform .12s,box-shadow .15s;
+    }
+    .go:active{opacity:.85;transform:scale(.97);box-shadow:0 2px 8px rgba(255,92,26,.2)}
+
+    /* fab */
+    .fab{
+      position:fixed;bottom:calc(var(--sb)+20px);right:20px;
+      width:56px;height:56px;border-radius:18px;
+      background:linear-gradient(135deg,#ff5c1a,#ff8040);
+      border:none;color:#fff;font-size:26px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+      box-shadow:0 6px 24px rgba(255,92,26,.45);
+      transition:transform .15s,box-shadow .15s;
+      z-index:10;
+    }
+    .fab:active{transform:scale(.9);box-shadow:0 3px 12px rgba(255,92,26,.3)}
+
+    /* empty */
+    .empty{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:80px 32px;text-align:center;gap:8px;
+    }
+    .empty-ico{font-size:56px;margin-bottom:8px}
+    .empty-h{font-size:18px;font-weight:700}
+    .empty-p{font-size:14px;color:var(--hi);line-height:1.5}
+
+    /* ─── timer screen ─── */
+    .tscreen{background:var(--bg)}
+    .tscreen-inner{
+      flex:1;display:flex;flex-direction:column;
+      align-items:center;justify-content:space-between;
+      padding:0 0 calc(var(--sb)+24px);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    .phase-area{text-align:center;padding-top:4px}
+    .phase-lbl{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:5px 14px;border-radius:100px;
+      font-size:12px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.1em;
+      transition:background .35s,color .35s;
+    }
+    .phase-lbl.work{background:rgba(255,255,255,.07);color:var(--hi)}
+    .phase-lbl.rest{background:var(--g10);color:var(--g)}
+    .phase-lbl.boom{background:var(--r10);color:var(--r)}
+    .phase-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-      overscroll-behavior: none;
-      user-select: none;
-    }
+    .round-lbl{margin-top:5px;font-size:13px;color:var(--hi)}
 
-    /* ════════════════════════════════
-       SCREEN SYSTEM
-    ════════════════════════════════ */
-    .screen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-      transition: transform .32s cubic-bezier(.4,0,.2,1), opacity .32s;
-      will-change: transform;
+    /* ring */
+    .ring-area{
+      flex:1;display:flex;align-items:center;justify-content:center;
+      position:relative;width:100%;
     }
-    .screen.hidden     { transform: translateX(100%); pointer-events: none; }
-    .screen.slide-back { transform: translateX(-30%); pointer-events: none; }
+    .ring-svg{transform:rotate(-90deg);overflow:visible}
+    .ring-bg{fill:none}
+    .ring-track{fill:none;stroke:rgba(255,255,255,.05);transition:stroke .35s}
+    .ring-prog{
+      fill:none;stroke-linecap:round;
+      transition:stroke-dashoffset 1s linear,stroke .35s;
+    }
+    /* glow filter */
+    .ring-glow{fill:none;stroke-linecap:round;filter:blur(8px);opacity:.5;
+      transition:stroke-dashoffset 1s linear,stroke .35s;}
 
-    .screen-body {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
+    .ring-center{
+      position:absolute;inset:0;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:2px;
     }
-    .screen-body::-webkit-scrollbar { display: none; }
+    .big-time{
+      font-size:clamp(68px,20vw,96px);
+      font-weight:800;
+      letter-spacing:-4px;
+      font-variant-numeric:tabular-nums;
+      font-family:'SF Mono','Courier New',monospace;
+      line-height:1;
+      transition:color .35s;
+    }
+    .big-time.work{color:var(--tx)}
+    .big-time.rest{color:var(--g)}
+    .big-time.boom{color:var(--a)}
 
-    /* ════════════════════════════════
-       TOP BAR
-    ════════════════════════════════ */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 16px 8px;
-      flex-shrink: 0;
+    /* dots */
+    .rdots{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:0 24px}
+    .rdot{
+      height:4px;flex:1;max-width:28px;border-radius:2px;
+      background:rgba(255,255,255,.1);
+      transition:background .35s;
     }
-    .topbar-title {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -.3px;
-    }
-    .topbar-sub {
-      font-size: 13px;
-      color: var(--hint);
-      margin-top: 1px;
-    }
-    .icon-btn {
-      width: 40px; height: 40px;
-      border-radius: 12px;
-      background: var(--bg2);
-      border: none;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      font-size: 20px;
-      transition: opacity .15s;
-      flex-shrink: 0;
-    }
-    .icon-btn:active { opacity: .6; }
-    .back-btn {
-      display: flex; align-items: center; gap: 4px;
-      background: none; border: none;
-      color: var(--accent); font-size: 16px; font-weight: 600;
-      cursor: pointer; padding: 4px 0;
-      transition: opacity .15s;
-    }
-    .back-btn:active { opacity: .6; }
+    .rdot.done{background:rgba(255,92,26,.45)}
+    .rdot.cur {background:var(--a)}
 
-    /* ════════════════════════════════
-       TIMER LIST
-    ════════════════════════════════ */
-    .timer-list {
-      padding: 8px 16px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    /* controls */
+    .ctrls{display:flex;gap:12px;padding:0 20px;width:100%}
+    .c-reset{
+      width:96px;height:54px;border-radius:16px;
+      background:var(--s1);border:none;
+      color:var(--hi);font-size:14px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.05em;
+      cursor:pointer;transition:opacity .15s,transform .12s;
     }
+    .c-reset:active{opacity:.6;transform:scale(.96)}
+    .c-main{
+      flex:1;height:54px;border-radius:16px;
+      border:none;color:#fff;font-size:16px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.06em;
+      cursor:pointer;transition:opacity .15s,transform .12s,box-shadow .15s;
+    }
+    .c-main.start{
+      background:linear-gradient(135deg,#ff5c1a,#ff8c4a);
+      box-shadow:0 4px 20px rgba(255,92,26,.4);
+    }
+    .c-main.stop{
+      background:var(--s1);color:var(--tx);
+      box-shadow:none;
+    }
+    .c-main:active{opacity:.8;transform:scale(.97)}
 
-    .timer-item {
-      background: var(--bg2);
-      border-radius: 18px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      position: relative;
-      overflow: hidden;
+    /* done */
+    .done{
+      flex:1;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:32px 24px calc(var(--sb)+32px);
+      text-align:center;
     }
-    .timer-item::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-      background: var(--accent);
-      border-radius: 4px 0 0 4px;
+    .done-ico{font-size:80px;line-height:1;margin-bottom:16px}
+    .done-h{font-size:30px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+    .done-p{font-size:15px;color:var(--hi);margin-bottom:24px}
+    .done-cards{display:flex;gap:10px;margin-bottom:28px}
+    .dc{
+      background:var(--s1);border-radius:16px;
+      padding:14px 22px;text-align:center;
     }
+    .dc-v{font-size:26px;font-weight:800;color:var(--a)}
+    .dc-l{font-size:11px;color:var(--hi);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
+    .done-btn{
+      width:100%;height:52px;border-radius:16px;
+      background:linear-gradient(135deg,#ff5c1a,#ff8040);
+      border:none;color:#fff;font-size:16px;font-weight:700;
+      cursor:pointer;letter-spacing:.04em;text-transform:uppercase;
+      box-shadow:0 4px 18px rgba(255,92,26,.35);
+      transition:opacity .15s;margin-bottom:10px;
+    }
+    .done-btn:active{opacity:.8}
+    .done-btn2{
+      width:100%;height:52px;border-radius:16px;
+      background:var(--s1);border:none;color:var(--tx);
+      font-size:16px;font-weight:600;cursor:pointer;
+      transition:opacity .15s;
+    }
+    .done-btn2:active{opacity:.6}
 
-    .timer-item-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
+    /* ─── create ─── */
+    .crbody{padding:4px 20px calc(var(--sb)+90px)}
+    .cr-section{margin-bottom:24px}
+    .cr-lbl{
+      font-size:12px;font-weight:600;color:var(--hi);
+      text-transform:uppercase;letter-spacing:.08em;
+      margin-bottom:10px;
     }
-    .timer-item-name {
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    .timer-item-del {
-      width: 28px; height: 28px;
-      border-radius: 8px;
-      background: rgba(255,255,255,.06);
-      border: none;
-      color: var(--hint);
-      font-size: 14px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: background .15s, color .15s;
-    }
-    .timer-item-del:active { background: var(--red-dim); color: var(--red); }
+    .cr-lbl em{font-style:normal;font-weight:400;color:rgba(110,110,115,.6);text-transform:none}
 
-    .timer-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+    .inp{
+      width:100%;height:46px;border-radius:13px;
+      background:var(--s1);border:1.5px solid transparent;
+      color:var(--tx);font-size:15px;
+      padding:0 14px;outline:none;
+      font-family:inherit;
+      transition:border-color .2s;
     }
-    .pill {
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: rgba(255,255,255,.07);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--hint);
-    }
-    .pill.accent { background: var(--accent-dim); color: var(--accent); }
-    .pill.green  { background: var(--green-dim); color: var(--green); }
+    .inp:focus{border-color:var(--a)}
+    .inp::placeholder{color:var(--hi)}
 
-    .start-btn {
-      width: 100%;
-      height: 46px;
-      border-radius: 12px;
-      background: var(--accent);
-      border: none;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity .15s, transform .1s;
+    .chips2{display:flex;flex-wrap:wrap;gap:7px}
+    .ch{
+      padding:7px 15px;border-radius:100px;
+      background:var(--s1);border:1.5px solid transparent;
+      color:var(--hi);font-size:13px;font-weight:600;
+      cursor:pointer;transition:all .15s;
+      white-space:nowrap;
     }
-    .start-btn:active { opacity: .85; transform: scale(.98); }
+    .ch:active{transform:scale(.93)}
+    .ch.on{border-color:var(--a);background:var(--a10);color:var(--a)}
+    .ch.inf{font-size:18px;padding:4px 15px}
 
-    .empty-state {
-      text-align: center;
-      padding: 60px 32px;
-      color: var(--hint);
-    }
-    .empty-icon { font-size: 52px; margin-bottom: 12px; }
-    .empty-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-    .empty-sub { font-size: 14px; line-height: 1.5; }
+    .rgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+    .rgrid .ch{padding:8px 4px;text-align:center}
 
-    /* ════════════════════════════════
-       ACTIVE TIMER SCREEN
-    ════════════════════════════════ */
-    .timer-screen {
-      background: var(--bg);
+    .subbox{
+      margin-top:12px;padding:14px 16px;
+      background:rgba(255,255,255,.03);
+      border-radius:14px;border:1px solid rgba(255,255,255,.06);
     }
 
-    .phase-header {
-      text-align: center;
-      padding: 8px 16px 0;
+    .cta-bar{
+      position:fixed;bottom:0;left:0;right:0;
+      padding:12px 20px calc(var(--sb)+12px);
+      background:linear-gradient(to top,var(--bg) 60%,transparent);
+      z-index:5;
     }
-    .phase-name {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      color: var(--hint);
-      transition: color .3s;
+    .cta-btn{
+      width:100%;height:52px;border-radius:16px;
+      background:linear-gradient(135deg,#ff5c1a,#ff8040);
+      border:none;color:#fff;font-size:16px;font-weight:700;
+      cursor:pointer;letter-spacing:.05em;text-transform:uppercase;
+      box-shadow:0 4px 18px rgba(255,92,26,.35);
+      transition:opacity .15s;
     }
-    .phase-name.work { color: var(--hint); }
-    .phase-name.rest { color: var(--green); }
-    .phase-name.boom { color: var(--accent); }
-
-    .round-counter {
-      font-size: 13px;
-      color: var(--hint);
-      text-align: center;
-      margin-top: 2px;
-    }
-
-    /* Ring */
-    .ring-wrap {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 12px 0 8px;
-      position: relative;
-    }
-    .ring-wrap svg { transform: rotate(-90deg); display: block; }
-    .ring-track  { fill: none; }
-    .ring-fill   { fill: none; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke .35s; }
-    .ring-center {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    .clock-time {
-      font-size: clamp(64px, 18vw, 92px);
-      font-weight: 800;
-      letter-spacing: -3px;
-      font-variant-numeric: tabular-nums;
-      font-family: 'SF Mono', 'Courier New', monospace;
-      line-height: 1;
-      transition: color .35s;
-    }
-    .clock-time.work { color: var(--text); }
-    .clock-time.rest { color: var(--green); }
-    .clock-time.boom { color: var(--accent); }
-
-    .seg-label {
-      font-size: 12px;
-      color: var(--hint);
-    }
-
-    /* Controls */
-    .timer-controls {
-      padding: 0 20px;
-      display: flex;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-    .ctrl-btn {
-      height: 56px;
-      border-radius: 16px;
-      border: none;
-      font-size: 16px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      cursor: pointer;
-      transition: opacity .15s, transform .1s;
-    }
-    .ctrl-btn:active { opacity: .8; transform: scale(.97); }
-    .ctrl-reset {
-      flex: 0 0 100px;
-      background: var(--bg2);
-      color: var(--hint);
-    }
-    .ctrl-main {
-      flex: 1;
-      background: var(--accent);
-      color: #fff;
-    }
-    .ctrl-main.stop {
-      background: var(--bg2);
-      color: var(--text);
-      border: 2px solid rgba(255,255,255,.1);
-    }
-
-    /* Round dots */
-    .round-dots {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      padding: 12px 16px 0;
-      flex-wrap: wrap;
-    }
-    .rdot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.12);
-      transition: background .3s;
-    }
-    .rdot.done    { background: rgba(232,93,38,.5); }
-    .rdot.current { background: var(--accent); transform: scale(1.3); }
-
-    /* Done */
-    .done-overlay {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
-      text-align: center;
-      gap: 8px;
-    }
-    .done-emoji { font-size: 72px; }
-    .done-title { font-size: 28px; font-weight: 800; margin-top: 8px; }
-    .done-sub   { font-size: 15px; color: var(--hint); margin-bottom: 8px; }
-    .done-stats {
-      display: flex; gap: 12px; margin: 12px 0;
-    }
-    .done-stat {
-      background: var(--bg2);
-      border-radius: 14px;
-      padding: 12px 20px;
-      text-align: center;
-    }
-    .done-stat-val { font-size: 24px; font-weight: 800; color: var(--accent); }
-    .done-stat-lbl { font-size: 11px; color: var(--hint); margin-top: 2px; text-transform: uppercase; letter-spacing: .05em; }
-
-    /* ════════════════════════════════
-       CREATE SCREEN
-    ════════════════════════════════ */
-    .create-body { padding: 8px 16px 32px; }
-
-    .field { margin-bottom: 20px; }
-    .field-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--hint);
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      margin-bottom: 10px;
-    }
-    .field-label em {
-      font-style: normal;
-      font-weight: 400;
-      color: rgba(142,142,147,.5);
-      text-transform: none;
-    }
-
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      padding: 7px 14px;
-      border-radius: 10px;
-      background: var(--bg2);
-      border: 2px solid transparent;
-      color: var(--hint);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    .chip:active { transform: scale(.95); }
-    .chip.sel {
-      border-color: var(--accent);
-      background: var(--accent-dim);
-      color: var(--accent);
-    }
-    .chip.inf { font-size: 19px; line-height: 1; padding: 4px 14px; }
-
-    .rounds-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 7px;
-    }
-    .rounds-grid .chip { padding: 8px 4px; text-align: center; }
-
-    .sub-field {
-      margin-top: 12px;
-      padding: 14px;
-      background: rgba(255,255,255,.04);
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.07);
-    }
-
-    .create-cta {
-      position: sticky;
-      bottom: 0;
-      padding: 12px 16px calc(var(--safe-b) + 12px);
-      background: linear-gradient(to top, var(--bg) 70%, transparent);
-    }
-    .create-cta-btn {
-      width: 100%;
-      height: 52px;
-      border-radius: 14px;
-      background: var(--accent);
-      border: none;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      cursor: pointer;
-      transition: opacity .15s;
-    }
-    .create-cta-btn:disabled { opacity: .3; pointer-events: none; }
-    .create-cta-btn:not(:disabled):active { opacity: .85; }
-
-    /* safe bottom for list screen */
-    .safe-bottom { height: calc(var(--safe-b) + 16px); flex-shrink: 0; }
+    .cta-btn:disabled{opacity:.28;pointer-events:none;box-shadow:none}
+    .cta-btn:not(:disabled):active{opacity:.8}
   </style>
 </head>
-<body>
-<div id="root"></div>
-
+<body><div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const {useState,useEffect,useRef} = React;
 
-/* ── Telegram ── */
+/* tg */
 const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); }
-function haptic(t) {
-  try {
-    if (t==='light')   tg?.HapticFeedback?.impactOccurred('light');
-    if (t==='medium')  tg?.HapticFeedback?.impactOccurred('medium');
-    if (t==='success') tg?.HapticFeedback?.notificationOccurred('success');
-  } catch {}
-}
+if(tg){tg.ready();tg.expand();}
+const hap = t=>{try{
+  if(t==='l') tg?.HapticFeedback?.impactOccurred('light');
+  if(t==='m') tg?.HapticFeedback?.impactOccurred('medium');
+  if(t==='s') tg?.HapticFeedback?.notificationOccurred('success');
+}catch{}}
 
-/* ── Audio ── */
-function beep(type) {
-  try {
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const play = (f,d,delay=0,v=0.3) => {
-      const o=ctx.createOscillator(), g=ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value=f; o.type='square';
-      const t=ctx.currentTime+delay;
+/* audio */
+function beep(type){
+  try{
+    const c=new(window.AudioContext||window.webkitAudioContext)();
+    const p=(f,d,del=0,v=.28)=>{
+      const o=c.createOscillator(),g=c.createGain();
+      o.connect(g);g.connect(c.destination);
+      o.frequency.value=f;o.type='square';
+      const t=c.currentTime+del;
       g.gain.setValueAtTime(v,t);
-      g.gain.exponentialRampToValueAtTime(0.001,t+d);
-      o.start(t); o.stop(t+d);
+      g.gain.exponentialRampToValueAtTime(.001,t+d);
+      o.start(t);o.stop(t+d);
     };
-    if (type==='start') { play(880,.12); play(1100,.18,.15); }
-    if (type==='end')   { play(1100,.1); play(880,.1,.14); play(660,.22,.28); }
-    if (type==='tick')  { play(440,.05,0,.15); }
-  } catch {}
+    if(type==='start'){p(880,.12);p(1100,.18,.15);}
+    if(type==='end')  {p(1100,.1);p(880,.1,.14);p(660,.22,.28);}
+    if(type==='tick') {p(440,.05,0,.14);}
+  }catch{}
 }
 
-/* ── Utils ── */
-const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-const fmtS = s => s < 60 ? `${s}s` : fmt(s);
+const fmt = s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const fmtS= s=>s<60?`${s}s`:fmt(s);
 
-function describeTimer(t) {
-  const rounds = t.rounds === Infinity ? '∞' : t.rounds;
-  const lines = [
-    `${fmt(t.roundTime)} rounds · ${fmtS(t.rest)} rest · ${rounds} rounds`,
-  ];
-  if (t.explosive) {
-    const when = t.explosive.trigger === 'end_round' ? 'end of round' : 'end of each minute';
-    lines.push(`Explosive at ${when} · ${t.explosive.warnTime}s warning`);
-  }
-  return lines;
-}
-
-/* ── Storage ── */
-const DEFAULT_TIMERS = [
-  { id:'d1', label:'3 min Classic', roundTime:180, rest:60,  rounds:3, explosive:null },
-  { id:'d2', label:'5 min Pro',     roundTime:300, rest:90,  rounds:5, explosive:null },
-  { id:'d3', label:'Explosive 3',   roundTime:180, rest:60,  rounds:3, explosive:{ trigger:'end_round', warnTime:10 } },
+const DEFAULTS=[
+  {id:'d1',label:'3 min Classic', roundTime:180,rest:60, rounds:3, explosive:null},
+  {id:'d2',label:'5 min Fighter', roundTime:300,rest:90, rounds:5, explosive:null},
+  {id:'d3',label:'Explosive 3',   roundTime:180,rest:60, rounds:3, explosive:{trigger:'end_round',warnTime:10}},
 ];
-const load = () => { try { return JSON.parse(localStorage.getItem('bt3')||'null')||DEFAULT_TIMERS; } catch { return DEFAULT_TIMERS; } };
-const save = t => { try { localStorage.setItem('bt3', JSON.stringify(t)); } catch {} };
+const load=()=>{try{return JSON.parse(localStorage.getItem('bt4')||'null')||DEFAULTS}catch{return DEFAULTS}};
+const save=t=>{try{localStorage.setItem('bt4',JSON.stringify(t))}catch{}};
 
-/* ── Phase builder ── */
-function buildPhases(t) {
-  const N = t.rounds === Infinity ? 999 : t.rounds;
-  const ph = [];
-  for (let r=1; r<=N; r++) {
-    if (t.explosive?.trigger === 'end_minute') {
-      const w = t.explosive.warnTime;
-      const mins = Math.floor(t.roundTime/60);
-      for (let m=0;m<mins;m++) {
-        ph.push({ phase:'work', dur:60-w, round:r, label:'Round' });
-        ph.push({ phase:'boom', dur:w,    round:r, label:'Explosive!' });
+function buildPhases(t){
+  const N=t.rounds===Infinity?999:t.rounds, ph=[];
+  for(let r=1;r<=N;r++){
+    if(t.explosive?.trigger==='end_minute'){
+      const w=t.explosive.warnTime, mins=Math.floor(t.roundTime/60);
+      for(let m=0;m<mins;m++){
+        ph.push({phase:'work',dur:60-w,round:r,label:'Round'});
+        ph.push({phase:'boom',dur:w,round:r,label:'Explosive!'});
       }
-      const rem = t.roundTime%60;
-      if (rem>0) ph.push({ phase:'work', dur:rem, round:r, label:'Round' });
-    } else if (t.explosive?.trigger === 'end_round') {
-      const w = t.explosive.warnTime;
-      ph.push({ phase:'work', dur:t.roundTime-w, round:r, label:'Round' });
-      ph.push({ phase:'boom', dur:w,             round:r, label:'Explosive!' });
-    } else {
-      ph.push({ phase:'work', dur:t.roundTime, round:r, label:'Round' });
+      const rem=t.roundTime%60;
+      if(rem>0) ph.push({phase:'work',dur:rem,round:r,label:'Round'});
+    }else if(t.explosive?.trigger==='end_round'){
+      const w=t.explosive.warnTime;
+      ph.push({phase:'work',dur:t.roundTime-w,round:r,label:'Round'});
+      ph.push({phase:'boom',dur:w,round:r,label:'Explosive!'});
+    }else{
+      ph.push({phase:'work',dur:t.roundTime,round:r,label:'Round'});
     }
-    if (r<N) ph.push({ phase:'rest', dur:t.rest, round:r, label:'Rest' });
+    if(r<N) ph.push({phase:'rest',dur:t.rest,round:r,label:'Rest'});
   }
   return ph;
 }
 
-/* ══════════════════════════════════════
-   RING
-══════════════════════════════════════ */
-const SIZE=280, R=126, CIRC=2*Math.PI*R;
-function Ring({ left, total, phase }) {
-  const pct = total>0 ? left/total : 1;
-  const off  = CIRC*(1-pct);
-  const col  = phase==='rest'?'var(--green)':phase==='boom'?'var(--accent)':'rgba(255,255,255,.4)';
-  const bg   = phase==='rest'?'var(--green-dim)':phase==='boom'?'var(--accent-dim)':'rgba(255,255,255,.04)';
-  return (
-    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-      <circle className="ring-track" cx={SIZE/2} cy={SIZE/2} r={R} strokeWidth={10} stroke={bg}/>
-      <circle className="ring-fill"  cx={SIZE/2} cy={SIZE/2} r={R} strokeWidth={10}
+/* ── Ring ── */
+const SZ=290,RA=128,CIRC=2*Math.PI*RA;
+function Ring({left,total,phase}){
+  const pct=total>0?left/total:1, off=CIRC*(1-pct);
+  const col=phase==='rest'?'var(--g)':phase==='boom'?'var(--a)':'rgba(255,255,255,.5)';
+  return(
+    <svg className="ring-svg" width={SZ} height={SZ} viewBox={`0 0 ${SZ} ${SZ}`}>
+      <defs>
+        <filter id="gf"><feGaussianBlur stdDeviation="6"/></filter>
+      </defs>
+      <circle className="ring-track" cx={SZ/2} cy={SZ/2} r={RA} strokeWidth={9}/>
+      {/* glow */}
+      <circle className="ring-glow" cx={SZ/2} cy={SZ/2} r={RA} strokeWidth={12}
+        stroke={col} strokeDasharray={CIRC} strokeDashoffset={off} filter="url(#gf)"/>
+      {/* main */}
+      <circle className="ring-prog" cx={SZ/2} cy={SZ/2} r={RA} strokeWidth={9}
         stroke={col} strokeDasharray={CIRC} strokeDashoffset={off}/>
     </svg>
   );
 }
 
-/* ══════════════════════════════════════
-   ACTIVE TIMER SCREEN
-══════════════════════════════════════ */
-function TimerScreen({ timer, onBack, onDone }) {
-  const phases  = useRef(buildPhases(timer));
-  const [idx, setIdx]       = useState(0);
-  const [left, setLeft]     = useState(phases.current[0]?.dur||0);
-  const [running, setRun]   = useState(false);
-  const [done, setDone]     = useState(false);
-  const [elapsed, setElap]  = useState(0); // total seconds done
-  const ivRef  = useRef(null);
-  const idxRef = useRef(0);
-  idxRef.current = idx;
+/* ══════════ TIMER SCREEN ══════════ */
+function TimerScreen({timer,onBack}){
+  const phases=useRef(buildPhases(timer));
+  const [idx,setIdx]=useState(0);
+  const [left,setLeft]=useState(phases.current[0]?.dur||0);
+  const [run,setRun]=useState(false);
+  const [done,setDone]=useState(false);
+  const iv=useRef(null), idxR=useRef(0);
+  idxR.current=idx;
 
-  const totalRounds = timer.rounds === Infinity ? '∞' : timer.rounds;
+  const stop=()=>{clearInterval(iv.current);setRun(false);}
+  const reset=()=>{stop();setIdx(0);setLeft(phases.current[0]?.dur||0);setDone(false);hap('l');}
 
-  function tick() {
-    setLeft(prev => {
-      if (prev<=1) {
-        const ni = idxRef.current+1;
-        if (ni >= phases.current.length) {
-          clearInterval(ivRef.current);
-          setRun(false); setDone(true);
-          beep('end'); haptic('success');
-          return 0;
-        }
-        beep('end'); haptic('medium');
+  function tick(){
+    setLeft(p=>{
+      if(p<=1){
+        const ni=idxR.current+1;
+        if(ni>=phases.current.length){stop();setDone(true);beep('end');hap('s');return 0;}
+        beep('end');hap('m');
         setIdx(ni);
-        setElap(e=>e+prev);
         return phases.current[ni].dur;
       }
-      if (prev<=3) { beep('tick'); haptic('light'); }
-      return prev-1;
+      if(p<=3){beep('tick');hap('l');}
+      return p-1;
     });
   }
-
-  function toggleRun() {
-    if (done) return;
-    if (running) {
-      clearInterval(ivRef.current); setRun(false); haptic('light');
-    } else {
-      beep('start'); haptic('medium');
-      setRun(true);
-      ivRef.current = setInterval(tick,1000);
-    }
+  function toggle(){
+    if(done)return;
+    if(run){stop();}
+    else{beep('start');hap('m');setRun(true);iv.current=setInterval(tick,1000);}
   }
-  function reset() {
-    clearInterval(ivRef.current);
-    setIdx(0); setLeft(phases.current[0]?.dur||0);
-    setRun(false); setDone(false); setElap(0);
-    haptic('light');
-  }
-  useEffect(() => () => clearInterval(ivRef.current), []);
+  useEffect(()=>()=>clearInterval(iv.current),[]);
 
-  const cur   = phases.current[idx];
-  const phase = done ? 'work' : (cur?.phase||'work');
-  const roundsArr = timer.rounds===Infinity ? [] : Array.from({length: timer.rounds},(_,i)=>i+1);
-  const currentRound = cur?.round || 1;
+  const cur=phases.current[idx];
+  const phase=done?'work':(cur?.phase||'work');
+  const totalR=timer.rounds===Infinity?'∞':timer.rounds;
+  const curR=cur?.round||1;
+  const showDots=timer.rounds!==Infinity&&timer.rounds<=15&&timer.rounds>1;
 
-  if (done) {
-    const totalMin = Math.floor((elapsed)/60);
-    return (
-      <div className="screen timer-screen" style={{justifyContent:'flex-end'}}>
-        <div className="done-overlay">
-          <div className="done-emoji">🥊</div>
-          <div className="done-title">Workout Done!</div>
-          <div className="done-sub">Great work, champion.</div>
-          <div className="done-stats">
-            <div className="done-stat">
-              <div className="done-stat-val">{totalRounds}</div>
-              <div className="done-stat-lbl">Rounds</div>
-            </div>
-            <div className="done-stat">
-              <div className="done-stat-val">{fmt(timer.roundTime)}</div>
-              <div className="done-stat-lbl">Round time</div>
-            </div>
+  if(done){
+    return(
+      <div className="screen tscreen">
+        <div className="topbar">
+          <button className="back" onClick={()=>{reset();onBack();}}>‹ Back</button>
+          <div style={{fontSize:14,fontWeight:600,color:'var(--hi)'}}>{timer.label}</div>
+          <div style={{width:48}}/>
+        </div>
+        <div className="done">
+          <div className="done-ico">🥊</div>
+          <div className="done-h">Workout Done!</div>
+          <div className="done-p">Great work, champion</div>
+          <div className="done-cards">
+            <div className="dc"><div className="dc-v">{totalR}</div><div className="dc-l">Rounds</div></div>
+            <div className="dc"><div className="dc-v">{fmt(timer.roundTime)}</div><div className="dc-l">Round time</div></div>
+            <div className="dc"><div className="dc-v">{fmtS(timer.rest)}</div><div className="dc-l">Rest</div></div>
           </div>
-          <button className="start-btn" style={{marginTop:8}} onClick={()=>{ reset(); onBack(); }}>
-            Back to Timers
-          </button>
-          <button className="start-btn" style={{marginTop:8,background:'var(--bg2)',color:'var(--text)'}} onClick={reset}>
-            Go Again
-          </button>
+          <button className="done-btn" onClick={reset}>Go Again</button>
+          <button className="done-btn2" onClick={()=>{reset();onBack();}}>Back to Timers</button>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="screen timer-screen">
-      {/* Header */}
+  return(
+    <div className="screen tscreen">
       <div className="topbar">
-        <button className="back-btn" onClick={()=>{ clearInterval(ivRef.current); onBack(); }}>
-          ‹ Back
-        </button>
-        <div style={{fontSize:14,fontWeight:600,color:'var(--hint)'}}>{timer.label}</div>
-        <div style={{width:40}}/>
+        <button className="back" onClick={()=>{stop();onBack();}}>‹ Back</button>
+        <div style={{fontSize:14,fontWeight:600,color:'var(--hi)'}}>{timer.label}</div>
+        <div style={{width:48}}/>
       </div>
 
-      {/* Phase + round */}
-      <div className="phase-header">
-        <div className={`phase-name ${phase}`}>{cur?.label || 'Ready'}</div>
-        <div className="round-counter">Round {currentRound} / {totalRounds}</div>
-      </div>
-
-      {/* Round dots */}
-      {roundsArr.length <= 15 && roundsArr.length > 1 && (
-        <div className="round-dots">
-          {roundsArr.map(r => (
-            <div key={r} className={`rdot${r<currentRound?' done':r===currentRound?' current':''}`}/>
-          ))}
+      <div className="tscreen-inner">
+        {/* phase badge */}
+        <div className="phase-area">
+          <span className={`phase-lbl ${phase}`}>
+            <span className="phase-dot"/>
+            {cur?.label||'Ready'}
+          </span>
+          <div className="round-lbl">Round {curR} / {totalR}</div>
         </div>
-      )}
 
-      {/* Ring + Clock */}
-      <div className="ring-wrap" style={{flex:1}}>
-        <Ring left={left} total={cur?.dur||1} phase={phase}/>
-        <div className="ring-center">
-          <div className={`clock-time ${phase}`}>{fmt(left)}</div>
+        {/* ring */}
+        <div className="ring-area">
+          <Ring left={left} total={cur?.dur||1} phase={phase}/>
+          <div className="ring-center">
+            <div className={`big-time ${phase}`}>{fmt(left)}</div>
+          </div>
         </div>
-      </div>
 
-      {/* Controls */}
-      <div className="timer-controls" style={{paddingBottom: `calc(env(safe-area-inset-bottom,0px) + 20px)`}}>
-        <button className="ctrl-btn ctrl-reset" onClick={reset}>Reset</button>
-        <button className={`ctrl-btn ctrl-main${running?' stop':''}`} onClick={toggleRun}>
-          {running ? 'Stop' : 'Start'}
-        </button>
+        {/* round dots */}
+        {showDots&&(
+          <div className="rdots" style={{marginBottom:12,width:'100%'}}>
+            {Array.from({length:timer.rounds},(_,i)=>i+1).map(r=>(
+              <div key={r} className={`rdot${r<curR?' done':r===curR?' cur':''}`}/>
+            ))}
+          </div>
+        )}
+
+        {/* controls */}
+        <div className="ctrls">
+          <button className="c-reset" onClick={reset}>Reset</button>
+          <button className={`c-main ${run?'stop':'start'}`} onClick={toggle}>
+            {run?'Stop':'Start'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ══════════════════════════════════════
-   CREATE SCREEN
-══════════════════════════════════════ */
-function CreateScreen({ onBack, onCreate }) {
-  const [name,   setName]   = useState('');
-  const [rt,     setRt]     = useState(null);
-  const [rest,   setRest]   = useState(null);
-  const [rounds, setRounds] = useState(null);
-  const [exp,    setExp]    = useState(null);
-  const [warn,   setWarn]   = useState(null);
+/* ══════════ CREATE SCREEN ══════════ */
+function Ch({label,on,onClick,cls=''}){
+  return <button className={`ch${on?' on':''}${cls?' '+cls:''}`} onClick={()=>{hap('l');onClick();}}>{label}</button>;
+}
 
-  const valid = rt && rest && rounds;
+function CreateScreen({onBack,onCreate}){
+  const [name,setName]=useState('');
+  const [rt,setRt]=useState(null);
+  const [rest,setRest]=useState(null);
+  const [rds,setRds]=useState(null);
+  const [exp,setExp]=useState(null);
+  const [warn,setWarn]=useState(null);
+  const ok=rt&&rest&&rds;
 
-  function handleCreate() {
-    haptic('success');
-    const label = name.trim() || `${fmt(rt)} · ${rounds === '∞' ? '∞' : rounds} rounds`;
+  function submit(){
+    hap('s');
+    const label=name.trim()||`${fmt(rt)} · ${rds==='∞'?'∞':rds} rounds`;
     onCreate({
-      id: Date.now().toString(),
-      label,
-      roundTime: rt,
-      rest,
-      rounds: rounds==='∞' ? Infinity : rounds,
-      explosive: exp ? { trigger:exp, warnTime:warn||10 } : null,
+      id:Date.now().toString(),label,
+      roundTime:rt,rest,
+      rounds:rds==='∞'?Infinity:rds,
+      explosive:exp?{trigger:exp,warnTime:warn||10}:null,
     });
   }
 
-  const rtOpts   = [60,90,120,150,180,210,240,270,300,360,420,480,540,600];
-  const restOpts = [30,60,90,120,180];
-  const warnOpts = [5,10,15,20,30];
-
-  return (
+  return(
     <div className="screen">
       <div className="topbar">
-        <button className="back-btn" onClick={onBack}>‹ Cancel</button>
+        <button className="back" onClick={onBack}>‹ Cancel</button>
         <div style={{fontSize:17,fontWeight:700}}>New Timer</div>
         <div style={{width:60}}/>
       </div>
+      <div className="scroll">
+        <div className="crbody">
 
-      <div className="screen-body">
-        <div className="create-body">
-
-          {/* Name */}
-          <div className="field">
-            <div className="field-label">Name <em>· optional</em></div>
-            <input
-              style={{
-                width:'100%', height:44, borderRadius:10,
-                background:'var(--bg2)', border:'none',
-                color:'var(--text)', fontSize:15, padding:'0 14px',
-                outline:'none',
-              }}
-              placeholder="e.g. Morning session"
-              value={name}
-              onChange={e=>setName(e.target.value)}
-              maxLength={30}
-            />
+          <div className="cr-section">
+            <div className="cr-lbl">Name <em>· optional</em></div>
+            <input className="inp" placeholder="e.g. Morning session"
+              value={name} onChange={e=>setName(e.target.value)} maxLength={30}/>
           </div>
 
-          {/* Round time */}
-          <div className="field">
-            <div className="field-label">Round Time</div>
-            <div className="chips">
-              {rtOpts.map(s=>(
-                <button key={s} className={`chip${rt===s?' sel':''}`} onClick={()=>{haptic('light');setRt(s);}}>
-                  {fmt(s)}
-                </button>
+          <div className="cr-section">
+            <div className="cr-lbl">Round Time</div>
+            <div className="chips2">
+              {[60,90,120,150,180,210,240,270,300,360,420,480,540,600].map(s=>(
+                <Ch key={s} label={fmt(s)} on={rt===s} onClick={()=>setRt(s)}/>
               ))}
             </div>
           </div>
 
-          {/* Rest */}
-          <div className="field">
-            <div className="field-label">Rest</div>
-            <div className="chips">
-              {restOpts.map(s=>(
-                <button key={s} className={`chip${rest===s?' sel':''}`} onClick={()=>{haptic('light');setRest(s);}}>
-                  {fmtS(s)}
-                </button>
+          <div className="cr-section">
+            <div className="cr-lbl">Rest</div>
+            <div className="chips2">
+              {[30,60,90,120,180].map(s=>(
+                <Ch key={s} label={fmtS(s)} on={rest===s} onClick={()=>setRest(s)}/>
               ))}
             </div>
           </div>
 
-          {/* Rounds */}
-          <div className="field">
-            <div className="field-label">Rounds</div>
-            <div className="chips rounds-grid">
+          <div className="cr-section">
+            <div className="cr-lbl">Rounds</div>
+            <div className="chips2 rgrid">
               {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=>(
-                <button key={n} className={`chip${rounds===n?' sel':''}`} onClick={()=>{haptic('light');setRounds(n);}}>
-                  {n}
-                </button>
+                <Ch key={n} label={n} on={rds===n} onClick={()=>setRds(n)}/>
               ))}
-              <button className={`chip inf${rounds==='∞'?' sel':''}`} onClick={()=>{haptic('light');setRounds('∞');}}>∞</button>
+              <Ch label="∞" on={rds==='∞'} onClick={()=>setRds('∞')} cls="inf"/>
             </div>
           </div>
 
-          {/* Explosive */}
-          <div className="field">
-            <div className="field-label">Explosive Work <em>· optional</em></div>
-            <div className="chips">
-              <button className={`chip${exp==='end_minute'?' sel':''}`}
-                onClick={()=>{haptic('light');setExp(exp==='end_minute'?null:'end_minute');}}>
-                End of each minute
-              </button>
-              <button className={`chip${exp==='end_round'?' sel':''}`}
-                onClick={()=>{haptic('light');setExp(exp==='end_round'?null:'end_round');}}>
-                End of round
-              </button>
+          <div className="cr-section">
+            <div className="cr-lbl">Explosive Work <em>· optional</em></div>
+            <div className="chips2">
+              <Ch label="End of each minute" on={exp==='end_minute'} onClick={()=>setExp(exp==='end_minute'?null:'end_minute')}/>
+              <Ch label="End of round"       on={exp==='end_round'}  onClick={()=>setExp(exp==='end_round' ?null:'end_round')} />
             </div>
-            {exp && (
-              <div className="sub-field">
-                <div className="field-label" style={{marginBottom:8}}>Warning before explosive</div>
-                <div className="chips">
-                  {warnOpts.map(s=>(
-                    <button key={s} className={`chip${warn===s?' sel':''}`} onClick={()=>{haptic('light');setWarn(s);}}>
-                      {s}s
-                    </button>
+            {exp&&(
+              <div className="subbox">
+                <div className="cr-lbl" style={{marginBottom:9}}>Warning before explosive</div>
+                <div className="chips2">
+                  {[5,10,15,20,30].map(s=>(
+                    <Ch key={s} label={`${s}s`} on={warn===s} onClick={()=>setWarn(s)}/>
                   ))}
                 </div>
               </div>
@@ -785,117 +624,88 @@ function CreateScreen({ onBack, onCreate }) {
 
         </div>
       </div>
-
-      <div className="create-cta">
-        <button className="create-cta-btn" disabled={!valid} onClick={handleCreate}>
-          Save Timer
-        </button>
+      <div className="cta-bar">
+        <button className="cta-btn" disabled={!ok} onClick={submit}>Save Timer</button>
       </div>
     </div>
   );
 }
 
-/* ══════════════════════════════════════
-   LIST SCREEN
-══════════════════════════════════════ */
-function ListScreen({ timers, onStart, onCreate, onDelete, active }) {
-  return (
-    <div className={`screen${active?'':' slide-back'}`}>
+/* ══════════ LIST SCREEN ══════════ */
+function ListScreen({timers,onStart,onCreate,onDelete,visible}){
+  return(
+    <div className={`screen${visible?'':' offleft'}`}>
       <div className="topbar">
         <div>
-          <div className="topbar-title">🥊 Boxing Timer</div>
-          <div className="topbar-sub">{timers.length} timer{timers.length!==1?'s':''}</div>
+          <div className="tbar-title">🥊 Boxing Timer</div>
+          <div className="tbar-sub">{timers.length} timer{timers.length!==1?'s':''} saved</div>
         </div>
-        <button className="icon-btn" onClick={()=>{haptic('light');onCreate();}}>＋</button>
       </div>
-
-      <div className="screen-body">
-        {timers.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">⏱</div>
-            <div className="empty-title">No timers yet</div>
-            <div className="empty-sub">Tap + to create your first boxing timer</div>
+      <div className="scroll">
+        {timers.length===0?(
+          <div className="empty">
+            <div className="empty-ico">⏱</div>
+            <div className="empty-h">No timers yet</div>
+            <div className="empty-p">Tap + to create your first boxing timer</div>
           </div>
-        ) : (
-          <div className="timer-list">
-            {timers.map(t => {
-              const rounds = t.rounds===Infinity?'∞':t.rounds;
-              return (
-                <div key={t.id} className="timer-item">
-                  <div className="timer-item-head">
-                    <div className="timer-item-name">{t.label}</div>
-                    <button className="timer-item-del" onClick={()=>{haptic('light');onDelete(t.id);}}>✕</button>
+        ):(
+          <div className="list">
+            {timers.map(t=>{
+              const rounds=t.rounds===Infinity?'∞':t.rounds;
+              return(
+                <div key={t.id} className="card">
+                  <div className="card-bar"/>
+                  <div className="card-head">
+                    <div className="card-name">{t.label}</div>
+                    <button className="del" onClick={()=>{hap('l');onDelete(t.id);}}>✕</button>
                   </div>
-                  <div className="timer-pills">
-                    <span className="pill accent">{fmt(t.roundTime)}</span>
-                    <span className="pill">{rounds} rounds</span>
-                    <span className="pill green">{fmtS(t.rest)} rest</span>
-                    {t.explosive && <span className="pill" style={{background:'var(--red-dim)',color:'var(--red)'}}>💥 Explosive</span>}
+                  <div className="tags">
+                    <span className="tag o">{fmt(t.roundTime)}</span>
+                    <span className="tag">{rounds} rounds</span>
+                    <span className="tag g">{fmtS(t.rest)} rest</span>
+                    {t.explosive&&<span className="tag r">💥 Explosive</span>}
                   </div>
-                  <button className="start-btn" onClick={()=>{haptic('medium');onStart(t);}}>
-                    Start
-                  </button>
+                  <button className="go" onClick={()=>{hap('m');onStart(t);}}>Start</button>
                 </div>
               );
             })}
           </div>
         )}
-        <div className="safe-bottom"/>
       </div>
+      <button className="fab" onClick={()=>{hap('l');onCreate();}}>＋</button>
     </div>
   );
 }
 
-/* ══════════════════════════════════════
-   APP
-══════════════════════════════════════ */
-function App() {
-  const [timers, setTimers]   = useState(load);
-  const [screen, setScreen]   = useState('list'); // list | timer | create
-  const [active, setActive]   = useState(null);
+/* ══════════ APP ══════════ */
+function App(){
+  const [timers,setTimers]=useState(load);
+  const [screen,setScreen]=useState('list');
+  const [active,setActive]=useState(null);
 
-  function handleStart(t) { setActive(t); setScreen('timer'); }
-  function handleCreate()  { setScreen('create'); }
-  function handleBack()    { setScreen('list'); }
-  function handleSave(t)   {
-    const next = [...timers, t];
-    setTimers(next); save(next);
-    setScreen('list');
-  }
-  function handleDelete(id) {
-    const next = timers.filter(t=>t.id!==id);
-    setTimers(next); save(next);
-  }
+  const del =id=>{const n=timers.filter(t=>t.id!==id);setTimers(n);save(n);};
+  const add  =t =>{const n=[...timers,t];setTimers(n);save(n);setScreen('list');};
 
-  return (
+  return(
     <>
       <ListScreen
         timers={timers}
-        onStart={handleStart}
-        onCreate={handleCreate}
-        onDelete={handleDelete}
-        active={screen==='list'}
+        visible={screen==='list'}
+        onStart={t=>{setActive(t);setScreen('timer');}}
+        onCreate={()=>setScreen('create')}
+        onDelete={del}
       />
-
-      {screen==='timer' && active && (
-        <TimerScreen
-          timer={active}
-          onBack={handleBack}
-          onDone={handleBack}
-        />
+      {screen==='timer'&&active&&(
+        <TimerScreen timer={active} onBack={()=>setScreen('list')}/>
       )}
-
-      {screen==='create' && (
-        <CreateScreen
-          onBack={handleBack}
-          onCreate={handleSave}
-        />
+      {screen==='create'&&(
+        <CreateScreen onBack={()=>setScreen('list')} onCreate={add}/>
       )}
     </>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
