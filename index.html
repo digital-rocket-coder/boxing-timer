@@ -10,235 +10,364 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     :root {
-      --accent: #e85d26;
-      --accent-dim: rgba(232,93,38,.15);
-      --green: #34c759;
-      --green-dim: rgba(52,199,89,.15);
-      --red: #ff3b30;
-      --red-dim: rgba(255,59,48,.15);
+      --accent:     #e85d26;
+      --accent-dim: rgba(232,93,38,.14);
+      --green:      #30d158;
+      --green-dim:  rgba(48,209,88,.14);
+      --red:        #ff453a;
+      --red-dim:    rgba(255,69,58,.14);
+      --bg:         var(--tg-theme-bg-color, #0d0d0d);
+      --bg2:        var(--tg-theme-secondary-bg-color, #1c1c1e);
+      --text:       var(--tg-theme-text-color, #ffffff);
+      --hint:       var(--tg-theme-hint-color, #8e8e93);
+      --safe-b:     env(safe-area-inset-bottom, 0px);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--tg-theme-bg-color, #0d0d0d);
-      color: var(--tg-theme-text-color, #ffffff);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100dvh;
-      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
       overscroll-behavior: none;
+      user-select: none;
     }
 
-    #root { width: 100%; }
-
-    /* ── Timer cards ── */
-    .timer-cards {
+    /* ════════════════════════════════
+       SCREEN SYSTEM
+    ════════════════════════════════ */
+    .screen {
+      position: fixed;
+      inset: 0;
       display: flex;
-      gap: 8px;
-      padding: 12px 16px 0;
-      overflow-x: auto;
-      scrollbar-width: none;
+      flex-direction: column;
+      background: var(--bg);
+      transition: transform .32s cubic-bezier(.4,0,.2,1), opacity .32s;
+      will-change: transform;
+    }
+    .screen.hidden     { transform: translateX(100%); pointer-events: none; }
+    .screen.slide-back { transform: translateX(-30%); pointer-events: none; }
+
+    .screen-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
-    .timer-cards::-webkit-scrollbar { display: none; }
+    .screen-body::-webkit-scrollbar { display: none; }
 
-    .timer-card {
-      flex-shrink: 0;
-      background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-      border: 2px solid transparent;
-      border-radius: 14px;
-      padding: 10px 16px;
-      text-align: center;
-      cursor: pointer;
-      transition: all .18s;
-      min-width: 80px;
-    }
-    .timer-card.active {
-      border-color: var(--accent);
-      background: var(--accent-dim);
-    }
-    .timer-card .tc-label {
-      font-size: 10px;
-      color: var(--tg-theme-hint-color, #8e8e93);
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      margin-bottom: 3px;
-    }
-    .timer-card .tc-value {
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .timer-card.active .tc-value { color: var(--accent); }
-
-    /* ── Clock area ── */
-    .clock-area {
+    /* ════════════════════════════════
+       TOP BAR
+    ════════════════════════════════ */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       padding: 16px 16px 8px;
-      text-align: center;
+      flex-shrink: 0;
     }
-    .round-info {
-      font-size: 13px;
-      color: var(--tg-theme-hint-color, #8e8e93);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      margin-bottom: 6px;
-    }
-    .clock {
-      font-size: clamp(80px, 22vw, 108px);
+    .topbar-title {
+      font-size: 22px;
       font-weight: 800;
-      line-height: 1;
-      letter-spacing: -2px;
-      font-variant-numeric: tabular-nums;
-      font-family: 'SF Mono', 'Courier New', monospace;
-      transition: color .3s;
+      letter-spacing: -.3px;
     }
-    .clock.work  { color: var(--tg-theme-text-color, #fff); }
-    .clock.rest  { color: var(--green); }
-    .clock.boom  { color: var(--accent); }
+    .topbar-sub {
+      font-size: 13px;
+      color: var(--hint);
+      margin-top: 1px;
+    }
+    .icon-btn {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: var(--bg2);
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      transition: opacity .15s;
+      flex-shrink: 0;
+    }
+    .icon-btn:active { opacity: .6; }
+    .back-btn {
+      display: flex; align-items: center; gap: 4px;
+      background: none; border: none;
+      color: var(--accent); font-size: 16px; font-weight: 600;
+      cursor: pointer; padding: 4px 0;
+      transition: opacity .15s;
+    }
+    .back-btn:active { opacity: .6; }
 
-    .phase-badge {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 5px 16px;
-      border-radius: 20px;
-      font-size: 12px;
+    /* ════════════════════════════════
+       TIMER LIST
+    ════════════════════════════════ */
+    .timer-list {
+      padding: 8px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timer-item {
+      background: var(--bg2);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .timer-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--accent);
+      border-radius: 4px 0 0 4px;
+    }
+
+    .timer-item-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .timer-item-name {
+      font-size: 18px;
       font-weight: 700;
+      line-height: 1.2;
+    }
+    .timer-item-del {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+      border: none;
+      color: var(--hint);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, color .15s;
+    }
+    .timer-item-del:active { background: var(--red-dim); color: var(--red); }
+
+    .timer-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill {
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.07);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--hint);
+    }
+    .pill.accent { background: var(--accent-dim); color: var(--accent); }
+    .pill.green  { background: var(--green-dim); color: var(--green); }
+
+    .start-btn {
+      width: 100%;
+      height: 46px;
+      border-radius: 12px;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .start-btn:active { opacity: .85; transform: scale(.98); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 32px;
+      color: var(--hint);
+    }
+    .empty-icon { font-size: 52px; margin-bottom: 12px; }
+    .empty-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .empty-sub { font-size: 14px; line-height: 1.5; }
+
+    /* ════════════════════════════════
+       ACTIVE TIMER SCREEN
+    ════════════════════════════════ */
+    .timer-screen {
+      background: var(--bg);
+    }
+
+    .phase-header {
+      text-align: center;
+      padding: 8px 16px 0;
+    }
+    .phase-name {
+      font-size: 13px;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: .1em;
-      transition: all .3s;
+      color: var(--hint);
+      transition: color .3s;
     }
-    .phase-badge.work  { background: rgba(255,255,255,.08); color: var(--tg-theme-hint-color, #8e8e93); }
-    .phase-badge.rest  { background: var(--green-dim); color: var(--green); }
-    .phase-badge.boom  { background: var(--red-dim); color: var(--red); }
+    .phase-name.work { color: var(--hint); }
+    .phase-name.rest { color: var(--green); }
+    .phase-name.boom { color: var(--accent); }
 
-    .segment-info {
-      font-size: 12px;
-      color: var(--tg-theme-hint-color, #8e8e93);
-      margin-top: 6px;
+    .round-counter {
+      font-size: 13px;
+      color: var(--hint);
+      text-align: center;
+      margin-top: 2px;
     }
 
-    /* ── Progress ring ── */
-    .progress-wrap {
+    /* Ring */
+    .ring-wrap {
       display: flex;
       justify-content: center;
-      margin: 4px 0 0;
+      align-items: center;
+      padding: 12px 0 8px;
       position: relative;
     }
-    .progress-wrap svg { transform: rotate(-90deg); }
-    .progress-track { fill: none; stroke: rgba(255,255,255,.06); }
-    .progress-fill {
-      fill: none;
-      stroke-linecap: round;
-      transition: stroke-dashoffset .9s linear, stroke .3s;
-    }
-    .clock-inner {
+    .ring-wrap svg { transform: rotate(-90deg); display: block; }
+    .ring-track  { fill: none; }
+    .ring-fill   { fill: none; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke .35s; }
+    .ring-center {
       position: absolute;
       inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 6px;
+    }
+    .clock-time {
+      font-size: clamp(64px, 18vw, 92px);
+      font-weight: 800;
+      letter-spacing: -3px;
+      font-variant-numeric: tabular-nums;
+      font-family: 'SF Mono', 'Courier New', monospace;
+      line-height: 1;
+      transition: color .35s;
+    }
+    .clock-time.work { color: var(--text); }
+    .clock-time.rest { color: var(--green); }
+    .clock-time.boom { color: var(--accent); }
+
+    .seg-label {
+      font-size: 12px;
+      color: var(--hint);
     }
 
-    /* ── Buttons ── */
-    .btn-row {
+    /* Controls */
+    .timer-controls {
+      padding: 0 20px;
       display: flex;
-      gap: 10px;
-      padding: 0 16px;
+      gap: 12px;
+      flex-shrink: 0;
     }
-    .btn {
-      flex: 1;
-      height: 52px;
-      border-radius: 14px;
+    .ctrl-btn {
+      height: 56px;
+      border-radius: 16px;
       border: none;
       font-size: 16px;
       font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
       cursor: pointer;
       transition: opacity .15s, transform .1s;
-      text-transform: uppercase;
-      letter-spacing: .06em;
     }
-    .btn:active { transform: scale(.97); opacity: .85; }
-    .btn-start  { background: var(--accent); color: #fff; }
-    .btn-stop   { background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-                  color: var(--tg-theme-text-color, #fff);
-                  border: 2px solid rgba(255,255,255,.1); }
-    .btn-reset  { background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-                  color: var(--tg-theme-hint-color, #8e8e93);
-                  border: 2px solid transparent; }
-
-    /* ── Done screen ── */
-    .done-screen {
-      text-align: center;
-      padding: 40px 16px 24px;
+    .ctrl-btn:active { opacity: .8; transform: scale(.97); }
+    .ctrl-reset {
+      flex: 0 0 100px;
+      background: var(--bg2);
+      color: var(--hint);
     }
-    .done-icon { font-size: 64px; margin-bottom: 16px; }
-    .done-title { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
-    .done-sub { color: var(--tg-theme-hint-color, #8e8e93); font-size: 15px; }
-
-    /* ── Divider ── */
-    .divider {
-      height: 1px;
-      background: rgba(255,255,255,.06);
-      margin: 16px 0;
-    }
-
-    /* ── Create section ── */
-    .create-wrap {
-      padding: 0 16px 24px;
-    }
-    .create-title {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 14px;
-    }
-
-    .tab-row {
-      display: flex;
-      background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-      border-radius: 10px;
-      padding: 3px;
-      margin-bottom: 18px;
-      gap: 3px;
-    }
-    .tab {
+    .ctrl-main {
       flex: 1;
-      height: 34px;
-      border-radius: 8px;
-      border: none;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      background: transparent;
-      color: var(--tg-theme-hint-color, #8e8e93);
-      transition: all .18s;
+      background: var(--accent);
+      color: #fff;
     }
-    .tab.active { background: var(--accent); color: #fff; }
+    .ctrl-main.stop {
+      background: var(--bg2);
+      color: var(--text);
+      border: 2px solid rgba(255,255,255,.1);
+    }
 
-    .field { margin-bottom: 16px; }
+    /* Round dots */
+    .round-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 16px 0;
+      flex-wrap: wrap;
+    }
+    .rdot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+      transition: background .3s;
+    }
+    .rdot.done    { background: rgba(232,93,38,.5); }
+    .rdot.current { background: var(--accent); transform: scale(1.3); }
+
+    /* Done */
+    .done-overlay {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      text-align: center;
+      gap: 8px;
+    }
+    .done-emoji { font-size: 72px; }
+    .done-title { font-size: 28px; font-weight: 800; margin-top: 8px; }
+    .done-sub   { font-size: 15px; color: var(--hint); margin-bottom: 8px; }
+    .done-stats {
+      display: flex; gap: 12px; margin: 12px 0;
+    }
+    .done-stat {
+      background: var(--bg2);
+      border-radius: 14px;
+      padding: 12px 20px;
+      text-align: center;
+    }
+    .done-stat-val { font-size: 24px; font-weight: 800; color: var(--accent); }
+    .done-stat-lbl { font-size: 11px; color: var(--hint); margin-top: 2px; text-transform: uppercase; letter-spacing: .05em; }
+
+    /* ════════════════════════════════
+       CREATE SCREEN
+    ════════════════════════════════ */
+    .create-body { padding: 8px 16px 32px; }
+
+    .field { margin-bottom: 20px; }
     .field-label {
-      font-size: 11px;
-      color: var(--tg-theme-hint-color, #8e8e93);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--hint);
       text-transform: uppercase;
-      letter-spacing: .06em;
-      margin-bottom: 8px;
+      letter-spacing: .07em;
+      margin-bottom: 10px;
     }
     .field-label em {
       font-style: normal;
+      font-weight: 400;
       color: rgba(142,142,147,.5);
       text-transform: none;
     }
 
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
-      padding: 6px 13px;
-      border-radius: 8px;
-      background: var(--tg-theme-secondary-bg-color, #1c1c1e);
+      padding: 7px 14px;
+      border-radius: 10px;
+      background: var(--bg2);
       border: 2px solid transparent;
-      color: var(--tg-theme-hint-color, #8e8e93);
+      color: var(--hint);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -250,477 +379,519 @@
       background: var(--accent-dim);
       color: var(--accent);
     }
-    .chip.inf { font-size: 17px; padding: 3px 13px; }
+    .chip.inf { font-size: 19px; line-height: 1; padding: 4px 14px; }
 
     .rounds-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
+      gap: 7px;
     }
-    .rounds-grid .chip { padding: 7px 4px; text-align: center; }
+    .rounds-grid .chip { padding: 8px 4px; text-align: center; }
 
     .sub-field {
-      margin-top: 10px;
-      padding: 12px;
-      background: rgba(255,255,255,.03);
-      border-radius: 10px;
+      margin-top: 12px;
+      padding: 14px;
+      background: rgba(255,255,255,.04);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.07);
     }
-    .sub-field .field-label { margin-bottom: 6px; }
 
-    .create-btn {
+    .create-cta {
+      position: sticky;
+      bottom: 0;
+      padding: 12px 16px calc(var(--safe-b) + 12px);
+      background: linear-gradient(to top, var(--bg) 70%, transparent);
+    }
+    .create-cta-btn {
       width: 100%;
-      height: 50px;
+      height: 52px;
       border-radius: 14px;
-      border: none;
       background: var(--accent);
+      border: none;
       color: #fff;
       font-size: 16px;
       font-weight: 700;
-      cursor: pointer;
-      margin-top: 6px;
       text-transform: uppercase;
-      letter-spacing: .05em;
+      letter-spacing: .06em;
+      cursor: pointer;
       transition: opacity .15s;
     }
-    .create-btn:disabled { opacity: .3; }
-    .create-btn:not(:disabled):active { opacity: .85; }
+    .create-cta-btn:disabled { opacity: .3; pointer-events: none; }
+    .create-cta-btn:not(:disabled):active { opacity: .85; }
 
-    /* ── Popup ── */
-    .popup-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.6);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: flex-end;
-      z-index: 100;
-    }
-    .popup {
-      background: var(--tg-theme-secondary-bg-color, #1c1c1e);
-      border-radius: 20px 20px 0 0;
-      padding: 28px 20px calc(env(safe-area-inset-bottom,0px) + 28px);
-      width: 100%;
-      text-align: center;
-    }
-    .popup-icon { font-size: 44px; margin-bottom: 10px; }
-    .popup h2 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
-    .popup p { font-size: 14px; color: var(--tg-theme-hint-color, #8e8e93); line-height: 1.5; margin-bottom: 20px; }
-    .popup-price { font-size: 28px; font-weight: 800; color: var(--accent); margin-bottom: 18px; }
-    .popup-price span { font-size: 14px; color: var(--tg-theme-hint-color, #8e8e93); font-weight: 400; }
-    .popup .btn-row { padding: 0; flex-direction: column; gap: 8px; }
-    .popup .btn { flex: none; width: 100%; }
+    /* safe bottom for list screen */
+    .safe-bottom { height: calc(var(--safe-b) + 16px); flex-shrink: 0; }
   </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
-// ── Telegram SDK ───────────────────────────────────────────
+/* ── Telegram ── */
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
-
-function haptic(type) {
+function haptic(t) {
   try {
-    if (type === 'light')   tg?.HapticFeedback?.impactOccurred('light');
-    if (type === 'medium')  tg?.HapticFeedback?.impactOccurred('medium');
-    if (type === 'heavy')   tg?.HapticFeedback?.impactOccurred('heavy');
-    if (type === 'success') tg?.HapticFeedback?.notificationOccurred('success');
-    if (type === 'warning') tg?.HapticFeedback?.notificationOccurred('warning');
+    if (t==='light')   tg?.HapticFeedback?.impactOccurred('light');
+    if (t==='medium')  tg?.HapticFeedback?.impactOccurred('medium');
+    if (t==='success') tg?.HapticFeedback?.notificationOccurred('success');
   } catch {}
 }
 
-// ── Audio ──────────────────────────────────────────────────
+/* ── Audio ── */
 function beep(type) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const play = (freq, dur, delay = 0, vol = 0.35) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const play = (f,d,delay=0,v=0.3) => {
+      const o=ctx.createOscillator(), g=ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = freq; o.type = 'square';
-      const t = ctx.currentTime + delay;
-      g.gain.setValueAtTime(vol, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      o.start(t); o.stop(t + dur);
+      o.frequency.value=f; o.type='square';
+      const t=ctx.currentTime+delay;
+      g.gain.setValueAtTime(v,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+d);
+      o.start(t); o.stop(t+d);
     };
-    if (type === 'start')   { play(880,.12); play(1100,.18,.14); }
-    if (type === 'end')     { play(1100,.1); play(880,.1,.13); play(660,.22,.26); }
-    if (type === 'warn')    { play(660,.08); play(660,.08,.12); play(880,.12,.24); }
-    if (type === 'tick')    { play(440,.05,0,.18); }
+    if (type==='start') { play(880,.12); play(1100,.18,.15); }
+    if (type==='end')   { play(1100,.1); play(880,.1,.14); play(660,.22,.28); }
+    if (type==='tick')  { play(440,.05,0,.15); }
   } catch {}
 }
 
-// ── Helpers ────────────────────────────────────────────────
-function fmt(sec) {
-  return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
-}
+/* ── Utils ── */
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const fmtS = s => s < 60 ? `${s}s` : fmt(s);
 
-const DEFAULT_TIMERS = [
-  { id:'d3', type:'classic', label:'3 min', roundTime:180, rest:60, rounds:3, explosive:null },
-  { id:'d5', type:'classic', label:'5 min', roundTime:300, rest:60, rounds:3, explosive:null },
-];
-
-function loadTimers() {
-  try { return JSON.parse(localStorage.getItem('bt2_timers')||'null') || DEFAULT_TIMERS; } catch { return DEFAULT_TIMERS; }
-}
-function saveTimers(t) { try { localStorage.setItem('bt2_timers', JSON.stringify(t)); } catch {} }
-function loadLastId() { return localStorage.getItem('bt2_last') || 'd3'; }
-function saveLastId(id) { try { localStorage.setItem('bt2_last', id); } catch {} }
-
-// ── Phase builder ──────────────────────────────────────────
-function buildPhases(t) {
-  const totalRounds = t.rounds === Infinity ? 999 : t.rounds;
-  const phases = [];
-
-  if (t.type === 'classic') {
-    for (let r = 1; r <= totalRounds; r++) {
-      if (t.explosive?.trigger === 'end_minute') {
-        const w = t.explosive.warnTime;
-        const mins = Math.floor(t.roundTime / 60);
-        for (let m = 0; m < mins; m++) {
-          phases.push({ phase:'work', dur: 60-w, round:r, label:'Round' });
-          phases.push({ phase:'boom', dur: w,    round:r, label:'Explosive!' });
-        }
-        const rem = t.roundTime % 60;
-        if (rem > 0) phases.push({ phase:'work', dur:rem, round:r, label:'Round' });
-      } else if (t.explosive?.trigger === 'end_round') {
-        const w = t.explosive.warnTime;
-        phases.push({ phase:'work', dur: t.roundTime-w, round:r, label:'Round' });
-        phases.push({ phase:'boom', dur: w,             round:r, label:'Explosive!' });
-      } else {
-        phases.push({ phase:'work', dur: t.roundTime, round:r, label:'Round' });
-      }
-      if (r < totalRounds)
-        phases.push({ phase:'rest', dur: t.rest, round:r, label:'Rest' });
-    }
-  } else {
-    for (let r = 1; r <= totalRounds; r++) {
-      for (let s = 1; s <= t.segments; s++) {
-        phases.push({ phase:'work', dur:t.freeTime, round:r, seg:s, segs:t.segments, label:'Work' });
-        phases.push({ phase:'boom', dur:t.expTime,  round:r, seg:s, segs:t.segments, label:'Explosive!' });
-        phases.push({ phase:'rest', dur:t.rest,     round:r, seg:s, segs:t.segments, label:'Rest' });
-      }
-    }
+function describeTimer(t) {
+  const rounds = t.rounds === Infinity ? '∞' : t.rounds;
+  const lines = [
+    `${fmt(t.roundTime)} rounds · ${fmtS(t.rest)} rest · ${rounds} rounds`,
+  ];
+  if (t.explosive) {
+    const when = t.explosive.trigger === 'end_round' ? 'end of round' : 'end of each minute';
+    lines.push(`Explosive at ${when} · ${t.explosive.warnTime}s warning`);
   }
-  return phases;
+  return lines;
 }
 
-// ── Progress ring ──────────────────────────────────────────
-const R = 110, CX = 120, CY = 120, STROKE = 8;
-const CIRC = 2 * Math.PI * R;
+/* ── Storage ── */
+const DEFAULT_TIMERS = [
+  { id:'d1', label:'3 min Classic', roundTime:180, rest:60,  rounds:3, explosive:null },
+  { id:'d2', label:'5 min Pro',     roundTime:300, rest:90,  rounds:5, explosive:null },
+  { id:'d3', label:'Explosive 3',   roundTime:180, rest:60,  rounds:3, explosive:{ trigger:'end_round', warnTime:10 } },
+];
+const load = () => { try { return JSON.parse(localStorage.getItem('bt3')||'null')||DEFAULT_TIMERS; } catch { return DEFAULT_TIMERS; } };
+const save = t => { try { localStorage.setItem('bt3', JSON.stringify(t)); } catch {} };
 
-function ProgressRing({ timeLeft, total, phase }) {
-  const pct = total > 0 ? timeLeft / total : 1;
-  const offset = CIRC * (1 - pct);
-  const color = phase === 'rest' ? 'var(--green)' : phase === 'boom' ? 'var(--accent)' : 'rgba(255,255,255,.45)';
+/* ── Phase builder ── */
+function buildPhases(t) {
+  const N = t.rounds === Infinity ? 999 : t.rounds;
+  const ph = [];
+  for (let r=1; r<=N; r++) {
+    if (t.explosive?.trigger === 'end_minute') {
+      const w = t.explosive.warnTime;
+      const mins = Math.floor(t.roundTime/60);
+      for (let m=0;m<mins;m++) {
+        ph.push({ phase:'work', dur:60-w, round:r, label:'Round' });
+        ph.push({ phase:'boom', dur:w,    round:r, label:'Explosive!' });
+      }
+      const rem = t.roundTime%60;
+      if (rem>0) ph.push({ phase:'work', dur:rem, round:r, label:'Round' });
+    } else if (t.explosive?.trigger === 'end_round') {
+      const w = t.explosive.warnTime;
+      ph.push({ phase:'work', dur:t.roundTime-w, round:r, label:'Round' });
+      ph.push({ phase:'boom', dur:w,             round:r, label:'Explosive!' });
+    } else {
+      ph.push({ phase:'work', dur:t.roundTime, round:r, label:'Round' });
+    }
+    if (r<N) ph.push({ phase:'rest', dur:t.rest, round:r, label:'Rest' });
+  }
+  return ph;
+}
+
+/* ══════════════════════════════════════
+   RING
+══════════════════════════════════════ */
+const SIZE=280, R=126, CIRC=2*Math.PI*R;
+function Ring({ left, total, phase }) {
+  const pct = total>0 ? left/total : 1;
+  const off  = CIRC*(1-pct);
+  const col  = phase==='rest'?'var(--green)':phase==='boom'?'var(--accent)':'rgba(255,255,255,.4)';
+  const bg   = phase==='rest'?'var(--green-dim)':phase==='boom'?'var(--accent-dim)':'rgba(255,255,255,.04)';
   return (
-    <svg width={CX*2} height={CY*2} viewBox={`0 0 ${CX*2} ${CY*2}`}>
-      <circle className="progress-track" cx={CX} cy={CY} r={R} strokeWidth={STROKE} />
-      <circle className="progress-fill"
-        cx={CX} cy={CY} r={R} strokeWidth={STROKE}
-        stroke={color}
-        strokeDasharray={CIRC}
-        strokeDashoffset={offset}
-      />
+    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+      <circle className="ring-track" cx={SIZE/2} cy={SIZE/2} r={R} strokeWidth={10} stroke={bg}/>
+      <circle className="ring-fill"  cx={SIZE/2} cy={SIZE/2} r={R} strokeWidth={10}
+        stroke={col} strokeDasharray={CIRC} strokeDashoffset={off}/>
     </svg>
   );
 }
 
-// ══════════════════════════════════════════════════════════
-// RUNNING TIMER
-// ══════════════════════════════════════════════════════════
-function RunningTimer({ timer, onReset, onSelectTimer, timers }) {
-  const phases = useRef(buildPhases(timer));
-  const [idx, setIdx]         = useState(0);
-  const [left, setLeft]       = useState(phases.current[0]?.dur || 0);
-  const [running, setRunning] = useState(false);
-  const [done, setDone]       = useState(false);
+/* ══════════════════════════════════════
+   ACTIVE TIMER SCREEN
+══════════════════════════════════════ */
+function TimerScreen({ timer, onBack, onDone }) {
+  const phases  = useRef(buildPhases(timer));
+  const [idx, setIdx]       = useState(0);
+  const [left, setLeft]     = useState(phases.current[0]?.dur||0);
+  const [running, setRun]   = useState(false);
+  const [done, setDone]     = useState(false);
+  const [elapsed, setElap]  = useState(0); // total seconds done
   const ivRef  = useRef(null);
   const idxRef = useRef(0);
-
   idxRef.current = idx;
+
+  const totalRounds = timer.rounds === Infinity ? '∞' : timer.rounds;
 
   function tick() {
     setLeft(prev => {
-      if (prev <= 1) {
-        const nextIdx = idxRef.current + 1;
-        if (nextIdx >= phases.current.length) {
+      if (prev<=1) {
+        const ni = idxRef.current+1;
+        if (ni >= phases.current.length) {
           clearInterval(ivRef.current);
-          setRunning(false);
-          setDone(true);
+          setRun(false); setDone(true);
           beep('end'); haptic('success');
           return 0;
         }
         beep('end'); haptic('medium');
-        const next = phases.current[nextIdx];
-        setIdx(nextIdx);
-        return next.dur;
+        setIdx(ni);
+        setElap(e=>e+prev);
+        return phases.current[ni].dur;
       }
-      if (prev <= 4) { beep('tick'); haptic('light'); }
-      return prev - 1;
+      if (prev<=3) { beep('tick'); haptic('light'); }
+      return prev-1;
     });
   }
 
-  function handleStartStop() {
+  function toggleRun() {
     if (done) return;
     if (running) {
-      clearInterval(ivRef.current);
-      setRunning(false);
-      haptic('light');
+      clearInterval(ivRef.current); setRun(false); haptic('light');
     } else {
       beep('start'); haptic('medium');
-      setRunning(true);
-      ivRef.current = setInterval(tick, 1000);
+      setRun(true);
+      ivRef.current = setInterval(tick,1000);
     }
   }
-
+  function reset() {
+    clearInterval(ivRef.current);
+    setIdx(0); setLeft(phases.current[0]?.dur||0);
+    setRun(false); setDone(false); setElap(0);
+    haptic('light');
+  }
   useEffect(() => () => clearInterval(ivRef.current), []);
 
-  useEffect(() => {
-    clearInterval(ivRef.current);
-    phases.current = buildPhases(timer);
-    setIdx(0);
-    setLeft(phases.current[0]?.dur || 0);
-    setRunning(false);
-    setDone(false);
-  }, [timer.id]);
-
   const cur   = phases.current[idx];
-  const phase = done ? 'work' : (cur?.phase || 'work');
+  const phase = done ? 'work' : (cur?.phase||'work');
+  const roundsArr = timer.rounds===Infinity ? [] : Array.from({length: timer.rounds},(_,i)=>i+1);
+  const currentRound = cur?.round || 1;
 
-  return (
-    <div>
-      <div className="timer-cards">
-        {timers.map(t => (
-          <div key={t.id}
-            className={`timer-card${t.id === timer.id ? ' active' : ''}`}
-            onClick={() => { haptic('light'); onSelectTimer(t); }}>
-            <div className="tc-label">{t.type === 'power' ? '👑 Power' : 'Classic'}</div>
-            <div className="tc-value">{t.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {done ? (
-        <div className="done-screen">
-          <div className="done-icon">🥊</div>
+  if (done) {
+    const totalMin = Math.floor((elapsed)/60);
+    return (
+      <div className="screen timer-screen" style={{justifyContent:'flex-end'}}>
+        <div className="done-overlay">
+          <div className="done-emoji">🥊</div>
           <div className="done-title">Workout Done!</div>
           <div className="done-sub">Great work, champion.</div>
-          <div style={{height:28}} />
-          <div style={{padding:'0 16px'}}>
-            <button className="create-btn" onClick={() => { haptic('medium'); onReset(); }}>
-              New Round
-            </button>
+          <div className="done-stats">
+            <div className="done-stat">
+              <div className="done-stat-val">{totalRounds}</div>
+              <div className="done-stat-lbl">Rounds</div>
+            </div>
+            <div className="done-stat">
+              <div className="done-stat-val">{fmt(timer.roundTime)}</div>
+              <div className="done-stat-lbl">Round time</div>
+            </div>
           </div>
+          <button className="start-btn" style={{marginTop:8}} onClick={()=>{ reset(); onBack(); }}>
+            Back to Timers
+          </button>
+          <button className="start-btn" style={{marginTop:8,background:'var(--bg2)',color:'var(--text)'}} onClick={reset}>
+            Go Again
+          </button>
         </div>
-      ) : (
-        <>
-          <div className="clock-area">
-            <div className="round-info">
-              Round {cur?.round}{timer.rounds !== Infinity ? ` / ${timer.rounds}` : ''}
-            </div>
-            <div className="progress-wrap">
-              <ProgressRing timeLeft={left} total={cur?.dur || 1} phase={phase} />
-              <div className="clock-inner">
-                <div className={`clock ${phase}`}>{fmt(left)}</div>
-                <div className={`phase-badge ${phase}`}>{cur?.label}</div>
-                {cur?.seg && (
-                  <div className="segment-info">Segment {cur.seg} / {cur.segs}</div>
-                )}
-              </div>
-            </div>
-          </div>
+      </div>
+    );
+  }
 
-          <div className="btn-row">
-            <button className="btn btn-reset" onClick={() => { haptic('light'); onReset(); }}>Reset</button>
-            <button className={`btn ${running ? 'btn-stop' : 'btn-start'}`} onClick={handleStartStop}>
-              {running ? 'Stop' : 'Start'}
-            </button>
-          </div>
-        </>
+  return (
+    <div className="screen timer-screen">
+      {/* Header */}
+      <div className="topbar">
+        <button className="back-btn" onClick={()=>{ clearInterval(ivRef.current); onBack(); }}>
+          ‹ Back
+        </button>
+        <div style={{fontSize:14,fontWeight:600,color:'var(--hint)'}}>{timer.label}</div>
+        <div style={{width:40}}/>
+      </div>
+
+      {/* Phase + round */}
+      <div className="phase-header">
+        <div className={`phase-name ${phase}`}>{cur?.label || 'Ready'}</div>
+        <div className="round-counter">Round {currentRound} / {totalRounds}</div>
+      </div>
+
+      {/* Round dots */}
+      {roundsArr.length <= 15 && roundsArr.length > 1 && (
+        <div className="round-dots">
+          {roundsArr.map(r => (
+            <div key={r} className={`rdot${r<currentRound?' done':r===currentRound?' current':''}`}/>
+          ))}
+        </div>
       )}
+
+      {/* Ring + Clock */}
+      <div className="ring-wrap" style={{flex:1}}>
+        <Ring left={left} total={cur?.dur||1} phase={phase}/>
+        <div className="ring-center">
+          <div className={`clock-time ${phase}`}>{fmt(left)}</div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="timer-controls" style={{paddingBottom: `calc(env(safe-area-inset-bottom,0px) + 20px)`}}>
+        <button className="ctrl-btn ctrl-reset" onClick={reset}>Reset</button>
+        <button className={`ctrl-btn ctrl-main${running?' stop':''}`} onClick={toggleRun}>
+          {running ? 'Stop' : 'Start'}
+        </button>
+      </div>
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════
-// CREATE FORM
-// ══════════════════════════════════════════════════════════
-function Chip({ label, sel, onClick, className='' }) {
-  return (
-    <button
-      className={`chip${sel?' sel':''}${className?' '+className:''}`}
-      onClick={() => { haptic('light'); onClick(); }}>
-      {label}
-    </button>
-  );
-}
+/* ══════════════════════════════════════
+   CREATE SCREEN
+══════════════════════════════════════ */
+function CreateScreen({ onBack, onCreate }) {
+  const [name,   setName]   = useState('');
+  const [rt,     setRt]     = useState(null);
+  const [rest,   setRest]   = useState(null);
+  const [rounds, setRounds] = useState(null);
+  const [exp,    setExp]    = useState(null);
+  const [warn,   setWarn]   = useState(null);
 
-function CreateForm({ onCreate }) {
-  const [tab, setTab]   = useState('classic');
-  const [popup, setPopup] = useState(false);
-
-  const [cRT, setCRT]       = useState(null);
-  const [cRest, setCRest]   = useState(null);
-  const [cRounds, setCRounds] = useState(null);
-  const [cExp, setCExp]     = useState(null);
-  const [cWarn, setCWarn]   = useState(null);
-
-  const [pSegs, setPSegs]   = useState(null);
-  const [pFree, setPFree]   = useState(null);
-  const [pExp, setPExp]     = useState(null);
-  const [pRest, setPRest]   = useState(null);
-  const [pRounds, setPRounds] = useState(null);
-
-  const classicOk = cRT && cRest && cRounds;
-  const powerOk   = pSegs && pFree && pExp && pRest && pRounds;
+  const valid = rt && rest && rounds;
 
   function handleCreate() {
     haptic('success');
-    if (tab === 'classic') {
-      onCreate({
-        id: Date.now().toString(), type:'classic',
-        label: fmt(cRT),
-        roundTime: cRT, rest: cRest,
-        rounds: cRounds === '∞' ? Infinity : cRounds,
-        explosive: cExp ? { trigger:cExp, warnTime:cWarn||10 } : null,
-      });
-    } else {
-      onCreate({
-        id: Date.now().toString(), type:'power',
-        label: `${pSegs}×`,
-        segments:pSegs, freeTime:pFree, expTime:pExp,
-        rest:pRest, rounds: pRounds === '∞' ? Infinity : pRounds,
-      });
-    }
+    const label = name.trim() || `${fmt(rt)} · ${rounds === '∞' ? '∞' : rounds} rounds`;
+    onCreate({
+      id: Date.now().toString(),
+      label,
+      roundTime: rt,
+      rest,
+      rounds: rounds==='∞' ? Infinity : rounds,
+      explosive: exp ? { trigger:exp, warnTime:warn||10 } : null,
+    });
   }
 
-  const restOpts = [30, 60, 120, 180];
   const rtOpts   = [60,90,120,150,180,210,240,270,300,360,420,480,540,600];
+  const restOpts = [30,60,90,120,180];
   const warnOpts = [5,10,15,20,30];
-  const freeOpts = [10,20,30,40,60,120,180,240,300];
-  const expOpts  = [5,10,15,20,25,30,35,40,45,50,60];
-  const fmtS     = s => s < 60 ? `${s}s` : fmt(s);
 
   return (
-    <div className="create-wrap">
-      <div className="create-title">New Timer</div>
-      <div className="tab-row">
-        <button className={`tab${tab==='classic'?' active':''}`}
-          onClick={() => { haptic('light'); setTab('classic'); }}>Classic</button>
-        <button className={`tab${tab==='power'?' active':''}`}
-          onClick={() => { haptic('light'); setTab('power'); setPopup(true); }}>Power 👑</button>
+    <div className="screen">
+      <div className="topbar">
+        <button className="back-btn" onClick={onBack}>‹ Cancel</button>
+        <div style={{fontSize:17,fontWeight:700}}>New Timer</div>
+        <div style={{width:60}}/>
       </div>
 
-      {tab === 'classic' && <>
-        <div className="field">
-          <div className="field-label">Round Time</div>
-          <div className="chips">{rtOpts.map(s=><Chip key={s} label={fmt(s)} sel={cRT===s} onClick={()=>setCRT(s)}/>)}</div>
-        </div>
-        <div className="field">
-          <div className="field-label">Rest</div>
-          <div className="chips">{restOpts.map(s=><Chip key={s} label={fmtS(s)} sel={cRest===s} onClick={()=>setCRest(s)}/>)}</div>
-        </div>
-        <div className="field">
-          <div className="field-label">Rounds</div>
-          <div className="chips rounds-grid">
-            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=><Chip key={n} label={n} sel={cRounds===n} onClick={()=>setCRounds(n)}/>)}
-            <Chip label="∞" sel={cRounds==='∞'} onClick={()=>setCRounds('∞')} className="inf"/>
-          </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Add Explosive Work <em>· optional</em></div>
-          <div className="chips">
-            <Chip label="End of minute" sel={cExp==='end_minute'} onClick={()=>setCExp(cExp==='end_minute'?null:'end_minute')}/>
-            <Chip label="End of round"  sel={cExp==='end_round'}  onClick={()=>setCExp(cExp==='end_round'?null:'end_round')}/>
-          </div>
-          {cExp && <div className="sub-field">
-            <div className="field-label">Warning before explosive</div>
-            <div className="chips">{warnOpts.map(s=><Chip key={s} label={`${s}s`} sel={cWarn===s} onClick={()=>setCWarn(s)}/>)}</div>
-          </div>}
-        </div>
-        <button className="create-btn" disabled={!classicOk} onClick={handleCreate}>Create Timer</button>
-      </>}
+      <div className="screen-body">
+        <div className="create-body">
 
-      {tab === 'power' && <>
-        <div className="field">
-          <div className="field-label">Round Segments</div>
-          <div className="chips rounds-grid">
-            {[1,2,3,4,5,6,7,8,9,10].map(n=><Chip key={n} label={n} sel={pSegs===n} onClick={()=>setPSegs(n)}/>)}
+          {/* Name */}
+          <div className="field">
+            <div className="field-label">Name <em>· optional</em></div>
+            <input
+              style={{
+                width:'100%', height:44, borderRadius:10,
+                background:'var(--bg2)', border:'none',
+                color:'var(--text)', fontSize:15, padding:'0 14px',
+                outline:'none',
+              }}
+              placeholder="e.g. Morning session"
+              value={name}
+              onChange={e=>setName(e.target.value)}
+              maxLength={30}
+            />
           </div>
-        </div>
-        <div className="field">
-          <div className="field-label">Free Work Time</div>
-          <div className="chips">{freeOpts.map(s=><Chip key={s} label={fmtS(s)} sel={pFree===s} onClick={()=>setPFree(s)}/>)}</div>
-        </div>
-        <div className="field">
-          <div className="field-label">Explosive Work Time</div>
-          <div className="chips">{expOpts.map(s=><Chip key={s} label={fmtS(s)} sel={pExp===s} onClick={()=>setPExp(s)}/>)}</div>
-        </div>
-        <div className="field">
-          <div className="field-label">Rest</div>
-          <div className="chips">{restOpts.map(s=><Chip key={s} label={fmtS(s)} sel={pRest===s} onClick={()=>setPRest(s)}/>)}</div>
-        </div>
-        <div className="field">
-          <div className="field-label">Rounds</div>
-          <div className="chips rounds-grid">
-            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=><Chip key={n} label={n} sel={pRounds===n} onClick={()=>setPRounds(n)}/>)}
-            <Chip label="∞" sel={pRounds==='∞'} onClick={()=>setPRounds('∞')} className="inf"/>
-          </div>
-        </div>
-        <button className="create-btn" disabled={!powerOk} onClick={handleCreate}>Create Timer</button>
-      </>}
 
-      {popup && (
-        <div className="popup-overlay" onClick={()=>setPopup(false)}>
-          <div className="popup" onClick={e=>e.stopPropagation()}>
-            <div className="popup-icon">👑</div>
-            <h2>Power Timer</h2>
-            <p>Advanced explosive work intervals for serious fighters. Full control over every second of your training.</p>
-            <div className="popup-price">$4.99 <span>/ one-time</span></div>
-            <div className="btn-row">
-              <button className="btn btn-start" onClick={()=>setPopup(false)}>Unlock Power Timer</button>
-              <button className="btn btn-reset" style={{border:'2px solid rgba(255,255,255,.1)'}}
-                onClick={()=>{ setPopup(false); setTab('classic'); }}>Maybe later</button>
+          {/* Round time */}
+          <div className="field">
+            <div className="field-label">Round Time</div>
+            <div className="chips">
+              {rtOpts.map(s=>(
+                <button key={s} className={`chip${rt===s?' sel':''}`} onClick={()=>{haptic('light');setRt(s);}}>
+                  {fmt(s)}
+                </button>
+              ))}
             </div>
           </div>
+
+          {/* Rest */}
+          <div className="field">
+            <div className="field-label">Rest</div>
+            <div className="chips">
+              {restOpts.map(s=>(
+                <button key={s} className={`chip${rest===s?' sel':''}`} onClick={()=>{haptic('light');setRest(s);}}>
+                  {fmtS(s)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Rounds */}
+          <div className="field">
+            <div className="field-label">Rounds</div>
+            <div className="chips rounds-grid">
+              {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=>(
+                <button key={n} className={`chip${rounds===n?' sel':''}`} onClick={()=>{haptic('light');setRounds(n);}}>
+                  {n}
+                </button>
+              ))}
+              <button className={`chip inf${rounds==='∞'?' sel':''}`} onClick={()=>{haptic('light');setRounds('∞');}}>∞</button>
+            </div>
+          </div>
+
+          {/* Explosive */}
+          <div className="field">
+            <div className="field-label">Explosive Work <em>· optional</em></div>
+            <div className="chips">
+              <button className={`chip${exp==='end_minute'?' sel':''}`}
+                onClick={()=>{haptic('light');setExp(exp==='end_minute'?null:'end_minute');}}>
+                End of each minute
+              </button>
+              <button className={`chip${exp==='end_round'?' sel':''}`}
+                onClick={()=>{haptic('light');setExp(exp==='end_round'?null:'end_round');}}>
+                End of round
+              </button>
+            </div>
+            {exp && (
+              <div className="sub-field">
+                <div className="field-label" style={{marginBottom:8}}>Warning before explosive</div>
+                <div className="chips">
+                  {warnOpts.map(s=>(
+                    <button key={s} className={`chip${warn===s?' sel':''}`} onClick={()=>{haptic('light');setWarn(s);}}>
+                      {s}s
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
-      )}
+      </div>
+
+      <div className="create-cta">
+        <button className="create-cta-btn" disabled={!valid} onClick={handleCreate}>
+          Save Timer
+        </button>
+      </div>
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════
-// APP
-// ══════════════════════════════════════════════════════════
+/* ══════════════════════════════════════
+   LIST SCREEN
+══════════════════════════════════════ */
+function ListScreen({ timers, onStart, onCreate, onDelete, active }) {
+  return (
+    <div className={`screen${active?'':' slide-back'}`}>
+      <div className="topbar">
+        <div>
+          <div className="topbar-title">🥊 Boxing Timer</div>
+          <div className="topbar-sub">{timers.length} timer{timers.length!==1?'s':''}</div>
+        </div>
+        <button className="icon-btn" onClick={()=>{haptic('light');onCreate();}}>＋</button>
+      </div>
+
+      <div className="screen-body">
+        {timers.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">⏱</div>
+            <div className="empty-title">No timers yet</div>
+            <div className="empty-sub">Tap + to create your first boxing timer</div>
+          </div>
+        ) : (
+          <div className="timer-list">
+            {timers.map(t => {
+              const rounds = t.rounds===Infinity?'∞':t.rounds;
+              return (
+                <div key={t.id} className="timer-item">
+                  <div className="timer-item-head">
+                    <div className="timer-item-name">{t.label}</div>
+                    <button className="timer-item-del" onClick={()=>{haptic('light');onDelete(t.id);}}>✕</button>
+                  </div>
+                  <div className="timer-pills">
+                    <span className="pill accent">{fmt(t.roundTime)}</span>
+                    <span className="pill">{rounds} rounds</span>
+                    <span className="pill green">{fmtS(t.rest)} rest</span>
+                    {t.explosive && <span className="pill" style={{background:'var(--red-dim)',color:'var(--red)'}}>💥 Explosive</span>}
+                  </div>
+                  <button className="start-btn" onClick={()=>{haptic('medium');onStart(t);}}>
+                    Start
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <div className="safe-bottom"/>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   APP
+══════════════════════════════════════ */
 function App() {
-  const [timers, setTimers]     = useState(loadTimers);
-  const [selId, setSelId]       = useState(loadLastId);
-  const [timerKey, setTimerKey] = useState(0);
+  const [timers, setTimers]   = useState(load);
+  const [screen, setScreen]   = useState('list'); // list | timer | create
+  const [active, setActive]   = useState(null);
 
-  const timer = timers.find(t=>t.id===selId) || timers[0];
-
-  function handleCreate(t) {
+  function handleStart(t) { setActive(t); setScreen('timer'); }
+  function handleCreate()  { setScreen('create'); }
+  function handleBack()    { setScreen('list'); }
+  function handleSave(t)   {
     const next = [...timers, t];
-    setTimers(next); saveTimers(next);
-    setSelId(t.id);  saveLastId(t.id);
-    setTimerKey(k=>k+1);
+    setTimers(next); save(next);
+    setScreen('list');
+  }
+  function handleDelete(id) {
+    const next = timers.filter(t=>t.id!==id);
+    setTimers(next); save(next);
   }
 
   return (
-    <div>
-      <RunningTimer
-        key={timerKey}
-        timer={timer}
+    <>
+      <ListScreen
         timers={timers}
-        onReset={()=>setTimerKey(k=>k+1)}
-        onSelectTimer={t=>{ setSelId(t.id); saveLastId(t.id); setTimerKey(k=>k+1); }}
+        onStart={handleStart}
+        onCreate={handleCreate}
+        onDelete={handleDelete}
+        active={screen==='list'}
       />
-      <div className="divider" />
-      <CreateForm onCreate={handleCreate} />
-    </div>
+
+      {screen==='timer' && active && (
+        <TimerScreen
+          timer={active}
+          onBack={handleBack}
+          onDone={handleBack}
+        />
+      )}
+
+      {screen==='create' && (
+        <CreateScreen
+          onBack={handleBack}
+          onCreate={handleSave}
+        />
+      )}
+    </>
   );
 }
 
