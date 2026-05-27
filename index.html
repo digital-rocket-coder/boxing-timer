@@ -278,64 +278,209 @@
     }
     .done-btn2:active{opacity:.6}
 
-    /* ─── create ─── */
-    .crbody{padding:4px 20px calc(var(--sb)+90px)}
-    .cr-section{margin-bottom:24px}
-    .cr-lbl{
-      font-size:12px;font-weight:600;color:var(--hi);
-      text-transform:uppercase;letter-spacing:.08em;
+    /* ─── create wizard ─── */
+
+    /* progress bar */
+    .wiz-progress{
+      padding:0 20px 16px;flex-shrink:0;
+    }
+    .wiz-steps{
+      display:flex;gap:5px;
+    }
+    .wiz-step{
+      flex:1;height:3px;border-radius:2px;
+      background:rgba(255,255,255,.1);
+      transition:background .3s;
+      overflow:hidden;
+    }
+    .wiz-step.done{background:var(--a)}
+    .wiz-step.active{background:linear-gradient(90deg,#e8194b,#ff6b35)}
+    .wiz-step-fill{
+      height:100%;
+      background:linear-gradient(90deg,#e8194b,#ff6b35);
+    }
+
+    /* step body */
+    .wiz-body{
+      flex:1;display:flex;flex-direction:column;
+      padding:0 20px;overflow-y:auto;scrollbar-width:none;
+    }
+    .wiz-body::-webkit-scrollbar{display:none}
+
+    .wiz-q{
+      font-size:26px;font-weight:800;letter-spacing:-.5px;
+      line-height:1.2;margin-bottom:6px;
+    }
+    .wiz-sub{
+      font-size:14px;color:var(--hi);margin-bottom:24px;line-height:1.4;
+    }
+
+    /* option grid — 2 columns for time options */
+    .opt-grid{
+      display:grid;gap:10px;
+    }
+    .opt-grid.col2{grid-template-columns:1fr 1fr}
+    .opt-grid.col3{grid-template-columns:1fr 1fr 1fr}
+    .opt-grid.col4{grid-template-columns:1fr 1fr 1fr 1fr}
+
+    .opt{
+      background:var(--s1);
+      border:1.5px solid rgba(255,255,255,.06);
+      border-radius:16px;
+      padding:16px 12px;
+      text-align:center;
+      cursor:pointer;
+      transition:all .18s;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:3px;
+    }
+    .opt:active{transform:scale(.95)}
+    .opt.on{
+      border-color:var(--a);
+      background:var(--a10);
+    }
+    .opt-val{
+      font-size:22px;font-weight:800;
+      letter-spacing:-.5px;
+      color:var(--tx);
+      transition:color .18s;
+    }
+    .opt.on .opt-val{color:var(--a)}
+    .opt-hint{
+      font-size:11px;color:var(--hi);font-weight:500;
+      transition:color .18s;
+    }
+    .opt.on .opt-hint{color:var(--a);opacity:.7}
+
+    /* round number options */
+    .num-grid{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:8px;
+    }
+    .num-opt{
+      aspect-ratio:1;
+      background:var(--s1);
+      border:1.5px solid rgba(255,255,255,.06);
+      border-radius:14px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:17px;font-weight:700;
+      cursor:pointer;color:var(--hi);
+      transition:all .18s;
+    }
+    .num-opt:active{transform:scale(.9)}
+    .num-opt.on{border-color:var(--a);background:var(--a10);color:var(--a)}
+    .num-opt.inf{font-size:22px}
+
+    /* toggle cards for explosive */
+    .tog-card{
+      background:var(--s1);
+      border:1.5px solid rgba(255,255,255,.06);
+      border-radius:18px;
+      padding:18px 18px;
+      cursor:pointer;
+      transition:all .18s;
+      display:flex;align-items:flex-start;gap:14px;
       margin-bottom:10px;
     }
-    .cr-lbl em{font-style:normal;font-weight:400;color:rgba(110,110,115,.6);text-transform:none}
-
-    .inp{
-      width:100%;height:46px;border-radius:13px;
-      background:var(--s1);border:1.5px solid transparent;
-      color:var(--tx);font-size:15px;
-      padding:0 14px;outline:none;
-      font-family:inherit;
-      transition:border-color .2s;
+    .tog-card:active{transform:scale(.98)}
+    .tog-card.on{border-color:var(--a);background:var(--a10)}
+    .tog-icon{
+      width:40px;height:40px;border-radius:12px;
+      background:rgba(255,255,255,.07);
+      display:flex;align-items:center;justify-content:center;
+      font-size:20px;flex-shrink:0;
+      transition:background .18s;
     }
-    .inp:focus{border-color:var(--a)}
-    .inp::placeholder{color:var(--hi)}
+    .tog-card.on .tog-icon{background:var(--a20)}
+    .tog-text{flex:1}
+    .tog-title{font-size:15px;font-weight:700;margin-bottom:3px;transition:color .18s}
+    .tog-card.on .tog-title{color:var(--a)}
+    .tog-desc{font-size:13px;color:var(--hi);line-height:1.4}
 
-    .chips2{display:flex;flex-wrap:wrap;gap:7px}
-    .ch{
-      padding:7px 15px;border-radius:100px;
-      background:var(--s1);border:1.5px solid transparent;
+    .warn-row{
+      display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;
+    }
+    .warn-chip{
+      padding:7px 14px;border-radius:100px;
+      background:var(--s1);border:1.5px solid rgba(255,255,255,.06);
       color:var(--hi);font-size:13px;font-weight:600;
       cursor:pointer;transition:all .15s;
-      white-space:nowrap;
     }
-    .ch:active{transform:scale(.93)}
-    .ch.on{border-color:var(--a);background:var(--a10);color:var(--a)}
-    .ch.inf{font-size:18px;padding:4px 15px}
+    .warn-chip:active{transform:scale(.93)}
+    .warn-chip.on{border-color:var(--a);background:var(--a10);color:var(--a)}
 
-    .rgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
-    .rgrid .ch{padding:8px 4px;text-align:center}
-
-    .subbox{
-      margin-top:12px;padding:14px 16px;
+    .warn-box{
       background:rgba(255,255,255,.03);
-      border-radius:14px;border:1px solid rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:14px;
+      padding:16px;
+      margin-top:4px;
     }
+    .warn-lbl{font-size:12px;font-weight:600;color:var(--hi);
+      text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
 
-    .cta-bar{
-      position:fixed;bottom:0;left:0;right:0;
-      padding:12px 20px calc(var(--sb)+12px);
-      background:linear-gradient(to top,var(--bg) 60%,transparent);
-      z-index:5;
+    /* name input */
+    .name-inp{
+      width:100%;padding:16px 18px;
+      background:var(--s1);
+      border:1.5px solid rgba(255,255,255,.06);
+      border-radius:18px;color:var(--tx);
+      font-size:18px;font-weight:600;
+      font-family:inherit;outline:none;
+      transition:border-color .2s;
     }
-    .cta-btn{
-      width:100%;height:52px;border-radius:16px;
+    .name-inp:focus{border-color:var(--a)}
+    .name-inp::placeholder{color:rgba(110,110,115,.5);font-weight:400}
+
+    .name-suggestions{
+      display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;
+    }
+    .sugg{
+      padding:8px 14px;border-radius:100px;
+      background:var(--s1);border:none;
+      color:var(--hi);font-size:13px;font-weight:500;
+      cursor:pointer;transition:all .15s;
+    }
+    .sugg:active{transform:scale(.95)}
+
+    /* summary card before save */
+    .summary{
+      background:var(--s1);border-radius:18px;
+      padding:18px;margin-bottom:16px;
+    }
+    .sum-name{font-size:18px;font-weight:800;margin-bottom:12px}
+    .sum-rows{display:flex;flex-direction:column;gap:8px}
+    .sum-row{display:flex;justify-content:space-between;align-items:center}
+    .sum-key{font-size:14px;color:var(--hi)}
+    .sum-val{font-size:14px;font-weight:700;color:var(--tx)}
+
+    /* bottom nav of wizard */
+    .wiz-nav{
+      padding:12px 20px calc(var(--sb)+12px);
+      display:flex;gap:10px;flex-shrink:0;
+    }
+    .wiz-back-btn{
+      width:52px;height:52px;border-radius:16px;
+      background:var(--s1);border:none;
+      color:var(--hi);font-size:20px;
+      cursor:pointer;transition:opacity .15s,transform .12s;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .wiz-back-btn:active{opacity:.6;transform:scale(.94)}
+    .wiz-next-btn{
+      flex:1;height:52px;border-radius:16px;
       background:linear-gradient(135deg,#e8194b,#ff6b35);
       border:none;color:#fff;font-size:16px;font-weight:700;
-      cursor:pointer;letter-spacing:.05em;text-transform:uppercase;
+      cursor:pointer;letter-spacing:.04em;
       box-shadow:0 4px 18px rgba(232,25,75,.35);
-      transition:opacity .15s;
+      transition:opacity .15s,transform .12s;
     }
-    .cta-btn:disabled{opacity:.28;pointer-events:none;box-shadow:none}
-    .cta-btn:not(:disabled):active{opacity:.8}
+    .wiz-next-btn:disabled{
+      opacity:.28;pointer-events:none;
+      background:var(--s1);color:var(--hi);box-shadow:none;
+    }
+    .wiz-next-btn:not(:disabled):active{opacity:.8;transform:scale(.97)}
   </style>
 </head>
 <body><div id="root"></div>
@@ -535,19 +680,43 @@ function TimerScreen({timer,onBack}){
   );
 }
 
-/* ══════════ CREATE SCREEN ══════════ */
-function Ch({label,on,onClick,cls=''}){
-  return <button className={`ch${on?' on':''}${cls?' '+cls:''}`} onClick={()=>{hap('l');onClick();}}>{label}</button>;
-}
+/* ══════════ CREATE WIZARD ══════════ */
+const RT_OPTS=[
+  {s:60, hint:'1 минута'},
+  {s:90, hint:'1.5 мин'},
+  {s:120,hint:'2 минуты'},
+  {s:150,hint:'2.5 мин'},
+  {s:180,hint:'3 минуты'},
+  {s:210,hint:'3.5 мин'},
+  {s:240,hint:'4 минуты'},
+  {s:270,hint:'4.5 мин'},
+  {s:300,hint:'5 минут'},
+  {s:360,hint:'6 минут'},
+  {s:420,hint:'7 минут'},
+  {s:480,hint:'8 минут'},
+  {s:540,hint:'9 минут'},
+  {s:600,hint:'10 минут'},
+];
+const REST_OPTS=[
+  {s:30, hint:'Быстрый'},
+  {s:60, hint:'Стандарт'},
+  {s:90, hint:'Средний'},
+  {s:120,hint:'Долгий'},
+  {s:180,hint:'Очень долгий'},
+];
+const TOTAL_STEPS=5;
 
 function CreateScreen({onBack,onCreate}){
-  const [name,setName]=useState('');
+  const [step,setStep]=useState(0);
   const [rt,setRt]=useState(null);
   const [rest,setRest]=useState(null);
   const [rds,setRds]=useState(null);
-  const [exp,setExp]=useState(null);
-  const [warn,setWarn]=useState(null);
-  const ok=rt&&rest&&rds;
+  const [exp,setExp]=useState(null);   // null | 'end_minute' | 'end_round'
+  const [warn,setWarn]=useState(10);
+  const [name,setName]=useState('');
+
+  const goNext=()=>{hap('m');setStep(s=>s+1);}
+  const goPrev=()=>{hap('l');if(step===0)onBack();else setStep(s=>s-1);}
 
   function submit(){
     hap('s');
@@ -556,76 +725,203 @@ function CreateScreen({onBack,onCreate}){
       id:Date.now().toString(),label,
       roundTime:rt,rest,
       rounds:rds==='∞'?Infinity:rds,
-      explosive:exp?{trigger:exp,warnTime:warn||10}:null,
+      explosive:exp?{trigger:exp,warnTime:warn}:null,
     });
   }
 
+  const steps=[
+    /* 0 — round time */
+    {
+      q:'Время раунда',
+      sub:'Сколько длится один раунд?',
+      canNext:!!rt,
+      body:(
+        <div className="opt-grid col2">
+          {RT_OPTS.map(o=>(
+            <div key={o.s} className={`opt${rt===o.s?' on':''}`}
+              onClick={()=>{hap('l');setRt(o.s);}}>
+              <div className="opt-val">{fmt(o.s)}</div>
+              <div className="opt-hint">{o.hint}</div>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    /* 1 — rest */
+    {
+      q:'Время отдыха',
+      sub:'Сколько отдыхать между раундами?',
+      canNext:!!rest,
+      body:(
+        <div className="opt-grid col1" style={{display:'flex',flexDirection:'column',gap:10}}>
+          {REST_OPTS.map(o=>(
+            <div key={o.s} className={`opt${rest===o.s?' on':''}`}
+              style={{flexDirection:'row',justifyContent:'space-between',padding:'18px 20px'}}
+              onClick={()=>{hap('l');setRest(o.s);}}>
+              <div className="opt-val" style={{fontSize:18}}>{fmtS(o.s)}</div>
+              <div className="opt-hint" style={{fontSize:14}}>{o.hint}</div>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    /* 2 — rounds */
+    {
+      q:'Количество раундов',
+      sub:'Сколько раундов в тренировке?',
+      canNext:!!rds,
+      body:(
+        <div className="num-grid">
+          {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=>(
+            <div key={n} className={`num-opt${rds===n?' on':''}`}
+              onClick={()=>{hap('l');setRds(n);}}>
+              {n}
+            </div>
+          ))}
+          <div className={`num-opt inf${rds==='∞'?' on':''}`}
+            onClick={()=>{hap('l');setRds('∞');}}>
+            ∞
+          </div>
+        </div>
+      ),
+    },
+    /* 3 — explosive */
+    {
+      q:'Взрывная работа',
+      sub:'Добавить взрывные отрезки? Можно пропустить.',
+      canNext:true,
+      body:(
+        <div>
+          <div className={`tog-card${exp===null?' on':''}`}
+            onClick={()=>{hap('l');setExp(null);}}>
+            <div className="tog-icon">🚫</div>
+            <div className="tog-text">
+              <div className="tog-title">Без взрывов</div>
+              <div className="tog-desc">Обычный раунд без взрывных отрезков</div>
+            </div>
+          </div>
+          <div className={`tog-card${exp==='end_round'?' on':''}`}
+            onClick={()=>{hap('l');setExp('end_round');}}>
+            <div className="tog-icon">💥</div>
+            <div className="tog-text">
+              <div className="tog-title">В конце раунда</div>
+              <div className="tog-desc">Взрывной финиш в конце каждого раунда</div>
+            </div>
+          </div>
+          <div className={`tog-card${exp==='end_minute'?' on':''}`}
+            onClick={()=>{hap('l');setExp('end_minute');}}>
+            <div className="tog-icon">⚡</div>
+            <div className="tog-text">
+              <div className="tog-title">Каждую минуту</div>
+              <div className="tog-desc">Взрыв в конце каждой минуты раунда</div>
+            </div>
+          </div>
+          {exp&&(
+            <div className="warn-box">
+              <div className="warn-lbl">Предупреждение за</div>
+              <div className="warn-row">
+                {[5,10,15,20,30].map(s=>(
+                  <div key={s} className={`warn-chip${warn===s?' on':''}`}
+                    onClick={()=>{hap('l');setWarn(s);}}>
+                    {s}с
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    /* 4 — name + summary */
+    {
+      q:'Название таймера',
+      sub:'Необязательно — можно оставить пустым.',
+      canNext:true,
+      body:(
+        <div>
+          <input className="name-inp"
+            placeholder="например, Утренняя тренировка"
+            value={name} onChange={e=>setName(e.target.value)} maxLength={30}/>
+          <div className="name-suggestions">
+            {['Утренняя','Вечерняя','Спарринг','Мешок','Лапы'].map(s=>(
+              <button key={s} className="sugg"
+                onClick={()=>{hap('l');setName(s);}}>
+                {s}
+              </button>
+            ))}
+          </div>
+          {/* summary */}
+          <div className="summary" style={{marginTop:24}}>
+            <div className="sum-name">{name.trim()||`${fmt(rt)} · ${rds==='∞'?'∞':rds} раундов`}</div>
+            <div className="sum-rows">
+              <div className="sum-row">
+                <span className="sum-key">Раунд</span>
+                <span className="sum-val">{fmt(rt)}</span>
+              </div>
+              <div className="sum-row">
+                <span className="sum-key">Отдых</span>
+                <span className="sum-val">{fmtS(rest)}</span>
+              </div>
+              <div className="sum-row">
+                <span className="sum-key">Раундов</span>
+                <span className="sum-val">{rds==='∞'?'∞':rds}</span>
+              </div>
+              {exp&&<div className="sum-row">
+                <span className="sum-key">Взрыв</span>
+                <span className="sum-val" style={{color:'var(--r)'}}>
+                  {exp==='end_round'?'В конце раунда':'Каждую минуту'} · {warn}с
+                </span>
+              </div>}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+  ];
+
+  const cur=steps[step];
+  const isLast=step===TOTAL_STEPS-1;
+
   return(
     <div className="screen">
+      {/* topbar */}
       <div className="topbar">
-        <button className="back" onClick={onBack}>‹ Отмена</button>
-        <div style={{fontSize:17,fontWeight:700}}>Новый таймер</div>
-        <div style={{width:60}}/>
+        <button className="back" onClick={goPrev}>
+          {step===0?'✕ Отмена':'‹ Назад'}
+        </button>
+        <div style={{fontSize:15,fontWeight:600,color:'var(--hi)'}}>
+          {step+1} / {TOTAL_STEPS}
+        </div>
+        <div style={{width:72}}/>
       </div>
-      <div className="scroll">
-        <div className="crbody">
 
-          <div className="cr-section">
-            <div className="cr-lbl">Название <em>· необязательно</em></div>
-            <input className="inp" placeholder="например, Утренняя тренировка"
-              value={name} onChange={e=>setName(e.target.value)} maxLength={30}/>
-          </div>
-
-          <div className="cr-section">
-            <div className="cr-lbl">Время раунда</div>
-            <div className="chips2">
-              {[60,90,120,150,180,210,240,270,300,360,420,480,540,600].map(s=>(
-                <Ch key={s} label={fmt(s)} on={rt===s} onClick={()=>setRt(s)}/>
-              ))}
-            </div>
-          </div>
-
-          <div className="cr-section">
-            <div className="cr-lbl">Отдых</div>
-            <div className="chips2">
-              {[30,60,90,120,180].map(s=>(
-                <Ch key={s} label={fmtS(s)} on={rest===s} onClick={()=>setRest(s)}/>
-              ))}
-            </div>
-          </div>
-
-          <div className="cr-section">
-            <div className="cr-lbl">Раунды</div>
-            <div className="chips2 rgrid">
-              {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=>(
-                <Ch key={n} label={n} on={rds===n} onClick={()=>setRds(n)}/>
-              ))}
-              <Ch label="∞" on={rds==='∞'} onClick={()=>setRds('∞')} cls="inf"/>
-            </div>
-          </div>
-
-          <div className="cr-section">
-            <div className="cr-lbl">Взрывная работа <em>· необязательно</em></div>
-            <div className="chips2">
-              <Ch label="В конце каждой минуты" on={exp==='end_minute'} onClick={()=>setExp(exp==='end_minute'?null:'end_minute')}/>
-              <Ch label="В конце раунда"         on={exp==='end_round'}  onClick={()=>setExp(exp==='end_round' ?null:'end_round')} />
-            </div>
-            {exp&&(
-              <div className="subbox">
-                <div className="cr-lbl" style={{marginBottom:9}}>Предупреждение до взрыва</div>
-                <div className="chips2">
-                  {[5,10,15,20,30].map(s=>(
-                    <Ch key={s} label={`${s}s`} on={warn===s} onClick={()=>setWarn(s)}/>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
+      {/* progress */}
+      <div className="wiz-progress">
+        <div className="wiz-steps">
+          {steps.map((_,i)=>(
+            <div key={i} className={`wiz-step${i<step?' done':i===step?' active':''}`}/>
+          ))}
         </div>
       </div>
-      <div className="cta-bar">
-        <button className="cta-btn" disabled={!ok} onClick={submit}>Сохранить таймер</button>
+
+      {/* step body */}
+      <div className="wiz-body">
+        <div className="wiz-q">{cur.q}</div>
+        <div className="wiz-sub">{cur.sub}</div>
+        {cur.body}
+        <div style={{height:8}}/>
+      </div>
+
+      {/* nav */}
+      <div className="wiz-nav">
+        {step>0&&(
+          <button className="wiz-back-btn" onClick={goPrev}>‹</button>
+        )}
+        <button className="wiz-next-btn"
+          disabled={!cur.canNext}
+          onClick={isLast?submit:goNext}>
+          {isLast?'Сохранить таймер':'Далее →'}
+        </button>
       </div>
     </div>
   );
